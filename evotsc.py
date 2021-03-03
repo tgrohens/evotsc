@@ -1,7 +1,7 @@
 import numpy as np
 
 class Gene:
-    def __init__(self, length, orientation, basal_expression, intergene):
+    def __init__(self, length, intergene, orientation, basal_expression):
         self.length = length                      # Length of the coding sequence
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
