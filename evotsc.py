@@ -24,9 +24,9 @@ class Gene:
 
         for gene in range(nb_genes):
             new_gene = cls(length=gene_length,
-                        intergene=intergene,
-                        orientation=np.random.randint(2),
-                        basal_expression=np.random.random())
+                           intergene=intergene,
+                           orientation=np.random.randint(2),
+                           basal_expression=np.random.random())
             genes.append(new_gene)
 
         return genes
