@@ -157,3 +157,56 @@ class Individual:
                 if gene.intergene + intergene_delta >= 0:
                     gene.intergene += intergene_delta
 
+
+class Population:
+    def __init__(self, init_indiv, nb_indivs, mutation):
+        # Individuals
+        self.individuals = []
+        self.nb_indivs = nb_indivs
+        for i_indiv in range(nb_indivs):
+            indiv = init_indiv.clone()
+            self.individuals.append(indiv)
+
+        # Mutation operators
+        self.mutation = mutation
+
+
+    def evaluate(self):
+        for indiv in self.individuals:
+            indiv.evaluate()
+
+
+    def evolve(self, nb_steps):
+        self.best_indivs = []
+        for t in range(nb_steps):
+            # On évalue tous les individus
+            fitnesses = np.zeros(self.nb_indivs)
+            for i_indiv, indiv in enumerate(self.individuals):
+                _, fitness = indiv.evaluate()
+                fitnesses[i_indiv] = fitness
+
+            # Sauvegarde du meilleur individu
+            best_indiv = self.individuals[np.argmax(fitnesses)]
+            self.best_indivs.append(best_indiv.clone())
+
+            # Sélection de l'ancêtre de chaque individu de la nouvelle génération
+            total_fitness = np.sum(fitnesses)
+            ancestors = np.random.choice(np.arange(self.nb_indivs),
+                                         size=self.nb_indivs,
+                                         p=fitnesses/total_fitness)
+
+            # Création de la nouvelle génération avec mutation
+            new_indivs = []
+            for i_new_indiv in range(self.nb_indivs):
+                ancestor = self.individuals[ancestors[i_new_indiv]]
+                new_indiv = ancestor.clone()
+                new_indiv.mutate(self.mutation)
+                new_indiv.evaluate()
+                new_indivs.append(new_indiv)
+
+            self.individuals = new_indivs
+
+            if t % 10 == 0:
+                print(f'Time {t}: avg fit {total_fitness/self.nb_indivs}')
+
+        return self.best_indivs
