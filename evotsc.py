@@ -1,4 +1,11 @@
+import copy
 import numpy as np
+
+# Class that holds all the mutation parameters
+class Mutation:
+    def __init__(self, intergene_mutation_prob, intergene_mutation_var):
+        self.intergene_mutation_prob = intergene_mutation_prob
+        self.intergene_mutation_var = intergene_mutation_var
 
 class Gene:
     def __init__(self, length, intergene, orientation, basal_expression):
@@ -10,6 +17,7 @@ class Gene:
     def __repr__(self):
         return f'{self.length}, {self.intergene}, {["LEADING", "LAGGING"][self.orientation]}, {self.basal_expression}'
 
+
 class Individual:
     def __init__(self, genes, interaction_dist, nb_eval_steps):
         self.genes = genes
@@ -17,6 +25,12 @@ class Individual:
         self.interaction_dist = interaction_dist
         self.nb_eval_steps = nb_eval_steps
 
+
+    def clone(self):
+        new_genes = [copy.copy(gene) for gene in self.genes]
+        return Individual(new_genes, self.interaction_dist, self.nb_eval_steps)
+
+    ############ Individual evaluation
 
     def compute_gene_positions(self):
         positions = np.zeros(self.nb_genes, dtype=int)
@@ -111,3 +125,16 @@ class Individual:
         self.fitness = self.compute_fitness(self.expr_levels)
 
         return self.expr_levels, self.fitness
+
+    ############ Mutation operators
+
+    def mutate(self, mutation):
+        for gene in self.genes:
+            # Mutate the intergenic distance
+            if np.random.random() < mutation.intergene_mutation_prob:
+                intergene_delta = np.random.normal(loc=0, scale=mutation.intergene_mutation_var)
+                intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
+
+                if gene.intergene + intergene_delta >= 0:
+                    gene.intergene += intergene_delta
+
