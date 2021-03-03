@@ -17,6 +17,20 @@ class Gene:
     def __repr__(self):
         return f'{self.length}, {self.intergene}, {["LEADING", "LAGGING"][self.orientation]}, {self.basal_expression}'
 
+    # Generate a list of random genes
+    @classmethod
+    def generate(cls, gene_length, intergene, nb_genes):
+        genes = []
+
+        for gene in range(nb_genes):
+            new_gene = cls(length=gene_length,
+                        intergene=intergene,
+                        orientation=np.random.randint(2),
+                        basal_expression=np.random.random())
+            genes.append(new_gene)
+
+        return genes
+
 
 class Individual:
     def __init__(self, genes, interaction_dist, nb_eval_steps):
@@ -112,9 +126,14 @@ class Individual:
 
     def compute_fitness(self, expr_levels):
         # On renvoie la somme des valeurs moyennes d'expression sur les 5 derniers pas de temps
-        avg_steps = 5
+        target_steps = 5
         nb_genes, nb_steps = expr_levels.shape
-        return np.mean(expr_levels[:, nb_steps-avg_steps:])
+        target = np.ones((nb_genes, target_steps)) * 2 # Target: tous les gènes activés au maximum
+
+        delta = np.sum(np.abs(expr_levels[:, nb_steps-target_steps:] - target))
+        fitness = np.exp(-delta)
+
+        return fitness
 
 
     def evaluate(self): # À changer si on évalue un individu plusieurs fois
