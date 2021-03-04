@@ -40,6 +40,13 @@ class Individual:
         self.nb_eval_steps = nb_eval_steps
 
 
+    def __repr__(self):
+        repr_str = ''
+        for i_gene, gene in enumerate(self.genes):
+            repr_str += f'Gene {i_gene}: {gene}\n'
+        return repr_str
+
+
     def clone(self):
         new_genes = [copy.copy(gene) for gene in self.genes]
         return Individual(new_genes, self.interaction_dist, self.nb_eval_steps)
