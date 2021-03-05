@@ -8,23 +8,21 @@ class Mutation:
         self.intergene_mutation_var = intergene_mutation_var
 
 class Gene:
-    def __init__(self, length, intergene, orientation, basal_expression):
-        self.length = length                      # Length of the coding sequence
+    def __init__(self, intergene, orientation, basal_expression):
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.basal_expression = basal_expression  # Initial expression level
 
     def __repr__(self):
-        return f'{self.length}, {self.intergene}, {["LEADING", "LAGGING"][self.orientation]}, {self.basal_expression}'
+        return f'{self.intergene}, {["LEADING", "LAGGING"][self.orientation]}, {self.basal_expression}'
 
     # Generate a list of random genes
     @classmethod
-    def generate(cls, gene_length, intergene, nb_genes):
+    def generate(cls, intergene, nb_genes):
         genes = []
 
         for gene in range(nb_genes):
-            new_gene = cls(length=gene_length,
-                           intergene=intergene,
+            new_gene = cls(intergene=intergene,
                            orientation=np.random.randint(2),
                            basal_expression=np.random.random())
             genes.append(new_gene)
@@ -61,7 +59,7 @@ class Individual:
 
         for i_gene, gene in enumerate(self.genes):
             positions[i_gene] = cur_pos
-            cur_pos += gene.length + gene.intergene
+            cur_pos += gene.intergene
 
         return positions, cur_pos
 
