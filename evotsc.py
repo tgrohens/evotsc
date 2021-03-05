@@ -33,10 +33,11 @@ class Gene:
 
 
 class Individual:
-    def __init__(self, genes, interaction_dist, nb_eval_steps):
+    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps):
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
+        self.interaction_coef = interaction_coef
         self.nb_eval_steps = nb_eval_steps
         self.already_evaluated = False
 
@@ -50,7 +51,7 @@ class Individual:
 
     def clone(self):
         new_genes = [copy.copy(gene) for gene in self.genes]
-        return Individual(new_genes, self.interaction_dist, self.nb_eval_steps)
+        return Individual(new_genes, self.interaction_dist, self.interaction_coef, self.nb_eval_steps)
 
     ############ Individual evaluation
 
@@ -65,54 +66,49 @@ class Individual:
         return positions, cur_pos
 
 
-    def compute_interaction(self, i_1, i_2):
-        # Calcul de l'influence de la transcription du gène 2 sur le gène 1
-
-        if i_1 == i_2: # It's the same gene
-            return 1.0
-
-
-        pos_1 = self.gene_positions[i_1]
-        pos_2 = self.gene_positions[i_2]
-
-        ## On veut savoir si le gène 1 est avant le gène 2 ou après
-        # Avant : -------1--2-------- ou -2---------------1-
-        # Après : -------2--1-------- ou -1---------------2-
-
-        if pos_1 < pos_2: # -------1--2-------- ou -1---------------2-
-            if pos_2 - pos_1 < self.genome_size + pos_1 - pos_2: # -------1--2--------
-                distance = pos_2 - pos_1
-                is_before = True
-            else: # -1---------------2-
-                distance = self.genome_size + pos_1 - pos_2
-                is_before = False
-
-        else: # -------2--1-------- ou -2---------------1-
-            if pos_1 - pos_2 < self.genome_size + pos_2 - pos_1: # -------2--1--------
-                distance = pos_1 - pos_2
-                is_before = False
-            else:
-                distance = self.genome_size + pos_2 - pos_1
-                is_before = True
-
-        ## Orientations relatives
-        if ((is_before and self.genes[i_2].orientation == 0) or
-            (not is_before and self.genes[i_2].orientation == 1)):
-            sign = +1
-        else:
-            sign = -1
-
-        strength = max(1 - distance/self.interaction_dist, 0)
-
-        return sign * strength
-
-
     def compute_inter_matrix(self):
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
         for i in range(self.nb_genes):
             for j in range(self.nb_genes):
-                inter_matrix[i, j] = self.compute_interaction(i, j)
+
+                if i == j: # It's the same gene
+                    inter_matrix[i, j] = 1.0
+                    continue
+
+                pos_1 = self.gene_positions[i]
+                pos_2 = self.gene_positions[j]
+
+                ## On veut savoir si le gène 1 est avant le gène 2 ou après
+                # Avant : -------1--2-------- ou -2---------------1-
+                # Après : -------2--1-------- ou -1---------------2-
+
+                if pos_1 < pos_2: # -------1--2-------- ou -1---------------2-
+                    if pos_2 - pos_1 < self.genome_size + pos_1 - pos_2: # -------1--2--------
+                        distance = pos_2 - pos_1
+                        is_before = True
+                    else: # -1---------------2-
+                        distance = self.genome_size + pos_1 - pos_2
+                        is_before = False
+
+                else: # -------2--1-------- ou -2---------------1-
+                    if pos_1 - pos_2 < self.genome_size + pos_2 - pos_1: # -------2--1--------
+                        distance = pos_1 - pos_2
+                        is_before = False
+                    else:
+                        distance = self.genome_size + pos_2 - pos_1
+                        is_before = True
+
+                ## Orientations relatives
+                if ((is_before and self.genes[i].orientation == 0) or
+                    (not is_before and self.genes[j].orientation == 1)):
+                    sign = +1
+                else:
+                    sign = -1
+
+                strength = max(1 - distance/self.interaction_dist, 0)
+
+                inter_matrix[i, j] = sign * strength * self.interaction_coef
 
         return inter_matrix
 
