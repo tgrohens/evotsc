@@ -38,6 +38,7 @@ class Individual:
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
         self.nb_eval_steps = nb_eval_steps
+        self.already_evaluated = False
 
 
     def __repr__(self):
@@ -143,7 +144,10 @@ class Individual:
         return fitness
 
 
-    def evaluate(self): # À changer si on évalue un individu plusieurs fois
+    def evaluate(self):
+        if self.already_evaluated:
+            return
+
         self.gene_positions, self.genome_size = self.compute_gene_positions()
         self.inter_matrix = self.compute_inter_matrix()
 
@@ -163,6 +167,8 @@ class Individual:
 
                 if gene.intergene + intergene_delta >= 0:
                     gene.intergene += intergene_delta
+
+        self.already_evaluated = False
 
 
 class Population:
@@ -208,7 +214,6 @@ class Population:
                 ancestor = self.individuals[ancestors[i_new_indiv]]
                 new_indiv = ancestor.clone()
                 new_indiv.mutate(self.mutation)
-                new_indiv.evaluate()
                 new_indivs.append(new_indiv)
 
             self.individuals = new_indivs
