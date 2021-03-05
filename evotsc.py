@@ -142,7 +142,7 @@ class Individual:
 
     def evaluate(self):
         if self.already_evaluated:
-            return
+            return self.expr_levels, self.fitness
 
         self.gene_positions, self.genome_size = self.compute_gene_positions()
         self.inter_matrix = self.compute_inter_matrix()
