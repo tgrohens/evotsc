@@ -150,6 +150,8 @@ class Individual:
         self.expr_levels = self.run_system(self.nb_eval_steps)
         self.fitness = self.compute_fitness(self.expr_levels)
 
+        self.already_evaluated = True
+
         return self.expr_levels, self.fitness
 
     ############ Mutation operators
