@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 
 # Class that holds all the mutation parameters
@@ -43,6 +42,13 @@ class Gene:
         return genes
 
 
+    def clone(self):
+        return Gene(intergene=self.intergene,
+                    orientation=self.orientation,
+                    basal_expression=self.basal_expression,
+                    id=self.id)
+
+
 class Individual:
     def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps, activation):
         self.genes = genes
@@ -63,7 +69,7 @@ class Individual:
 
 
     def clone(self):
-        new_genes = [copy.copy(gene) for gene in self.genes]
+        new_genes = [gene.clone() for gene in self.genes]
         return Individual(new_genes,
                           self.interaction_dist,
                           self.interaction_coef,
@@ -260,11 +266,11 @@ class Individual:
         #print(f'a: {a}, b: {b}, c: {c}, d: {d}')
 
         # Copy all the genes before the inversion
-        new_genes = [copy.copy(gene) for gene in self.genes[:start_i + 1]]
+        new_genes = [gene.clone() for gene in self.genes[:start_i + 1]]
 
         # Perform the actual inversion
         for invert_i in range(end_i - start_i):
-            inverted_gene = copy.copy(self.genes[end_i - invert_i])
+            inverted_gene = self.genes[end_i - invert_i].clone()
 
             # Get the new intergene
             if invert_i < end_i - start_i - 1:
@@ -279,7 +285,7 @@ class Individual:
 
         # Wrap up the remaining genes
         if end_i < self.nb_genes:
-            new_genes += [copy.copy(gene) for gene in self.genes[end_i+1:]]
+            new_genes += [gene.clone() for gene in self.genes[end_i+1:]]
 
         # Change the intergene of the last gene before the inversion to a + c
         # We do this last because start_i could be -1 if inverting the first gene
