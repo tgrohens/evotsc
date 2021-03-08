@@ -45,9 +45,10 @@ class Individual:
 
 
     def __repr__(self):
-        repr_str = ''
+        gene_pos, total_len = self.compute_gene_positions()
+        repr_str = f'length: {total_len}\n'
         for i_gene, gene in enumerate(self.genes):
-            repr_str += f'Gene {i_gene}: {gene}\n'
+            repr_str += f'Gene {i_gene}: pos {gene_pos[i_gene]}, intergene {gene}\n'
         return repr_str
 
 
