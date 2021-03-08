@@ -12,13 +12,17 @@ class Mutation:
         self.inversion_prob = inversion_prob
 
 class Gene:
-    def __init__(self, intergene, orientation, basal_expression):
+    def __init__(self, intergene, orientation, basal_expression, id):
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.basal_expression = basal_expression  # Initial expression level
+        self.id = id                              # Track genes through inversions
 
     def __repr__(self):
-        return f'{self.intergene}, {["LEADING", "LAGGING"][self.orientation]}, {self.basal_expression}'
+        return (f'ID: {self.id}, '
+                f'intergene: {self.intergene}, '
+                f'{["LEADING", "LAGGING"][self.orientation]}, '
+                f'expr: {self.basal_expression:.3}')
 
     # Generate a list of random genes
     @classmethod
@@ -32,7 +36,8 @@ class Gene:
                 basal_expression = default_basal_expression
             new_gene = cls(intergene=intergene,
                            orientation=np.random.randint(2),
-                           basal_expression=basal_expression)
+                           basal_expression=basal_expression,
+                           id=i_gene)
             genes.append(new_gene)
 
         return genes
@@ -53,7 +58,7 @@ class Individual:
         gene_pos, total_len = self.compute_gene_positions()
         repr_str = f'length: {total_len}\n'
         for i_gene, gene in enumerate(self.genes):
-            repr_str += f'Gene {i_gene}: pos {gene_pos[i_gene]}, intergene {gene}\n'
+            repr_str += f'Gene {i_gene}: pos {gene_pos[i_gene]}, {gene}\n'
         return repr_str
 
 
