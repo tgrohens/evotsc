@@ -18,13 +18,17 @@ class Gene:
 
     # Generate a list of random genes
     @classmethod
-    def generate(cls, intergene, nb_genes):
+    def generate(cls, intergene, nb_genes, default_basal_expression=None):
         genes = []
 
-        for gene in range(nb_genes):
+        for i_gene in range(nb_genes):
+            if default_basal_expression is None:
+                basal_expression = np.random.random()
+            else:
+                basal_expression = default_basal_expression
             new_gene = cls(intergene=intergene,
                            orientation=np.random.randint(2),
-                           basal_expression=np.random.random())
+                           basal_expression=basal_expression)
             genes.append(new_gene)
 
         return genes
