@@ -11,16 +11,18 @@ class Mutation:
         self.inversion_prob = inversion_prob
 
 class Gene:
-    def __init__(self, intergene, orientation, basal_expression, id):
+    def __init__(self, intergene, orientation, basal_expression, gene_type, id):
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.basal_expression = basal_expression  # Initial expression level
+        self.gene_type = gene_type                # Should the gene be active in env. A, B, or both
         self.id = id                              # Track genes through inversions
 
     def __repr__(self):
         return (f'ID: {self.id}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
+                f'type: {["A & B", "A", "B"][self.gene_type]}, '
                 f'expr: {self.basal_expression:.3}')
 
     # Generate a list of random genes
@@ -36,6 +38,7 @@ class Gene:
             new_gene = cls(intergene=intergene,
                            orientation=np.random.randint(2),
                            basal_expression=basal_expression,
+                           gene_type=np.random.randint(3),
                            id=i_gene)
             genes.append(new_gene)
 
@@ -46,18 +49,18 @@ class Gene:
         return Gene(intergene=self.intergene,
                     orientation=self.orientation,
                     basal_expression=self.basal_expression,
+                    gene_type=self.gene_type,
                     id=self.id)
 
 
 class Individual:
-    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps, activation):
+    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps):
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
         self.interaction_coef = interaction_coef
         self.nb_eval_steps = nb_eval_steps
         self.already_evaluated = False
-        self.activation = activation
 
 
     def __repr__(self):
@@ -73,8 +76,7 @@ class Individual:
         return Individual(new_genes,
                           self.interaction_dist,
                           self.interaction_coef,
-                          self.nb_eval_steps,
-                          self.activation)
+                          self.nb_eval_steps)
 
     ############ Individual evaluation
 
@@ -143,39 +145,55 @@ class Individual:
         return inter_matrix
 
 
-    def run_system(self, nb_steps):
-        temporal_expr = np.zeros((self.nb_genes, nb_steps))
+    def run_system(self, beta):
+        temporal_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
 
         # Initial values at t = 0
         temporal_expr[:, 0] = np.array([gene.basal_expression for gene in self.genes])
 
         # Iterate the system
-        for t in range(1, nb_steps):
-            temporal_expr[:, t] = self.activation(self.inter_matrix @ temporal_expr[:, t-1])
+        for t in range(1, self.nb_eval_steps):
+            eval_interm = self.inter_matrix @ temporal_expr[:, t-1]
+            temporal_expr[:, t] = np.tanh(2.0 * (eval_interm - 1.0) + beta) + 1.0
 
         return temporal_expr
 
 
-    def compute_fitness(self, expr_levels):
-        # On renvoie la somme des valeurs moyennes d'expression sur les 5 derniers pas de temps
+    def compute_fitness(self):
+        # On renvoie la moyenne de (valeur d'expression - target)
+        # sur les 5 derniers pas de temps et sur les gènes
         target_steps = 5
-        nb_genes, nb_steps = expr_levels.shape
-        target = np.ones((nb_genes, target_steps)) * 2 # Target: tous les gènes activés au maximum
+        selection_coef = 50
 
-        delta = np.sum(np.abs(expr_levels[:, nb_steps-target_steps:] - target))
-        fitness = np.exp(-delta)
+        expr_levels_A, expr_levels_B = self.expr_levels
+
+        target_A = np.zeros(self.nb_genes)
+        for i_gene in range(self.nb_genes):
+            if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 1:
+                target_A[i_gene] = 2.0
+        full_target_A = np.repeat([target_A], repeats=target_steps, axis=0).transpose()
+        delta_A = np.sum(np.abs(expr_levels_A[:, self.nb_eval_steps-target_steps:] - full_target_A)) / (target_steps * self.nb_genes)
+
+        target_B = np.zeros(self.nb_genes)
+        for i_gene in range(self.nb_genes):
+            if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 2:
+                target_B[i_gene] = 2.0
+        full_target_B = np.repeat([target_B], repeats=target_steps, axis=0).transpose()
+        delta_B = np.sum(np.abs(expr_levels_B[:, self.nb_eval_steps-target_steps:] - full_target_B)) / (target_steps * self.nb_genes)
+
+        fitness = np.exp(- selection_coef * (delta_A + delta_B))
 
         return fitness
 
 
-    def evaluate(self):
+    def evaluate(self, beta_A, beta_B):
         if self.already_evaluated:
             return self.expr_levels, self.fitness
 
         self.inter_matrix = self.compute_inter_matrix()
 
-        self.expr_levels = self.run_system(self.nb_eval_steps)
-        self.fitness = self.compute_fitness(self.expr_levels)
+        self.expr_levels = self.run_system(beta_A), self.run_system(beta_B)
+        self.fitness = self.compute_fitness()
 
         self.already_evaluated = True
 
@@ -312,13 +330,13 @@ class Population:
             indiv.evaluate()
 
 
-    def evolve(self, nb_steps):
+    def evolve(self, nb_steps, beta_A, beta_B):
         self.best_indivs = []
         for t in range(nb_steps):
             # On évalue tous les individus
             fitnesses = np.zeros(self.nb_indivs)
             for i_indiv, indiv in enumerate(self.individuals):
-                _, fitness = indiv.evaluate()
+                _, fitness = indiv.evaluate(beta_A, beta_B)
                 fitnesses[i_indiv] = fitness
 
             # Sauvegarde du meilleur individu
