@@ -160,9 +160,14 @@ class Individual:
 
         return self.expr_levels, self.fitness
 
-    ############ Mutation operators
+    ############ Mutational operators
 
     def mutate(self, mutation):
+        self.mutate_intergene_distances(mutation)
+        self.already_evaluated = False
+
+
+    def mutate_intergene_distances(self, mutation):
         for gene in self.genes:
             # Mutate the intergenic distance
             if np.random.random() < mutation.intergene_mutation_prob:
@@ -171,8 +176,6 @@ class Individual:
 
                 if gene.intergene + intergene_delta >= 0:
                     gene.intergene += intergene_delta
-
-        self.already_evaluated = False
 
 
 class Population:
