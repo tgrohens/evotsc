@@ -35,13 +35,14 @@ class Gene:
 
 
 class Individual:
-    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps):
+    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps, activation):
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
         self.interaction_coef = interaction_coef
         self.nb_eval_steps = nb_eval_steps
         self.already_evaluated = False
+        self.activation = activation
 
 
     def __repr__(self):
@@ -54,7 +55,11 @@ class Individual:
 
     def clone(self):
         new_genes = [copy.copy(gene) for gene in self.genes]
-        return Individual(new_genes, self.interaction_dist, self.interaction_coef, self.nb_eval_steps)
+        return Individual(new_genes,
+                          self.interaction_dist,
+                          self.interaction_coef,
+                          self.nb_eval_steps,
+                          self.activation)
 
     ############ Individual evaluation
 
@@ -124,9 +129,7 @@ class Individual:
 
         # Iterate the system
         for t in range(1, nb_steps):
-            temporal_expr[:, t] = self.inter_matrix @ temporal_expr[:, t-1]
-            temporal_expr[:, t] = np.maximum(temporal_expr[:, t], 0)
-            temporal_expr[:, t] = np.minimum(temporal_expr[:, t], 2)
+            temporal_expr[:, t] = self.activation(self.inter_matrix @ temporal_expr[:, t-1])
 
         return temporal_expr
 
