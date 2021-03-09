@@ -54,12 +54,15 @@ class Gene:
 
 
 class Individual:
-    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps):
+    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps, beta_A, beta_B):
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
         self.interaction_coef = interaction_coef
         self.nb_eval_steps = nb_eval_steps
+        self.beta_A = beta_A
+        self.beta_B = beta_B
+
         self.already_evaluated = False
 
 
@@ -76,7 +79,9 @@ class Individual:
         return Individual(new_genes,
                           self.interaction_dist,
                           self.interaction_coef,
-                          self.nb_eval_steps)
+                          self.nb_eval_steps,
+                          self.beta_A,
+                          self.beta_B)
 
     ############ Individual evaluation
 
@@ -186,13 +191,13 @@ class Individual:
         return fitness
 
 
-    def evaluate(self, beta_A, beta_B):
+    def evaluate(self):
         if self.already_evaluated:
             return self.expr_levels, self.fitness
 
         self.inter_matrix = self.compute_inter_matrix()
 
-        self.expr_levels = self.run_system(beta_A), self.run_system(beta_B)
+        self.expr_levels = self.run_system(self.beta_A), self.run_system(self.beta_B)
         self.fitness = self.compute_fitness()
 
         self.already_evaluated = True
@@ -330,13 +335,13 @@ class Population:
             indiv.evaluate()
 
 
-    def evolve(self, nb_steps, beta_A, beta_B):
+    def evolve(self, nb_steps):
         self.best_indivs = []
         for t in range(nb_steps):
             # On évalue tous les individus
             fitnesses = np.zeros(self.nb_indivs)
             for i_indiv, indiv in enumerate(self.individuals):
-                _, fitness = indiv.evaluate(beta_A, beta_B)
+                _, fitness = indiv.evaluate()
                 fitnesses[i_indiv] = fitness
 
             # Sauvegarde du meilleur individu
