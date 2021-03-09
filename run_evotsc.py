@@ -13,7 +13,7 @@ default_basal_expression = 1.0
 nb_eval_steps=51
 beta_A = 0.0
 beta_B = 0.25
-nb_genes = 10
+nb_genes = 60
 nb_indivs = 250
 save_step = 50
 
