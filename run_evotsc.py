@@ -17,6 +17,17 @@ nb_genes = 10
 nb_indivs = 250
 save_step = 50
 
+
+def save(output_dir, indiv, gen):
+    evotsc_plot.plot_expr_AB(indiv=indiv,
+                             plot_title='best generation 0',
+                             plot_name=f'{output_dir}/plot_best_gen_{gen:05}.png')
+    evotsc_plot.explain(indiv)
+
+    with open(f'{output_dir}/best_gen_{gen:05}.evotsc', 'wb') as save_file:
+        pickle.dump(indiv, save_file)
+
+
 def main():
     # Parse CLI arguments: output directory and number of generations
     if len(sys.argv) != 3:
@@ -50,11 +61,8 @@ def main():
                                    nb_indivs=nb_indivs,
                                    mutation=mutation)
 
-    # Evaluate the first individual
-    evotsc_plot.plot_expr_AB(indiv=init_indiv,
-                             plot_title='best generation 0',
-                             plot_name=f'{output_dir}/best generation 0.png')
-    evotsc_plot.explain(init_indiv)
+
+    save(output_dir, init_indiv, 0)
 
     best_indivs = []
     gen = 0
@@ -64,14 +72,7 @@ def main():
         gen += save_step
 
         cur_best = best_indivs[-1]
-        evotsc_plot.plot_expr_AB(indiv=cur_best,
-                                plot_title=f'best generation {gen}',
-                                plot_name=f'{output_dir}/best generation {gen}.png')
-        evotsc_plot.explain(best_indivs[-1])
-
-        with open(f'{output_dir}/best_gen_{gen}.evotsc', 'wb') as save_file:
-            pickle.dump(cur_best, save_file)
-
+        save(output_dir, cur_best, gen)
 
 
 if __name__ == "__main__":
