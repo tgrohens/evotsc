@@ -335,7 +335,7 @@ class Population:
             indiv.evaluate()
 
 
-    def evolve(self, nb_steps):
+    def evolve(self, nb_steps, start_time=0):
         self.best_indivs = []
         for t in range(nb_steps):
             # On évalue tous les individus
@@ -365,6 +365,6 @@ class Population:
             self.individuals = new_indivs
 
             if t % 10 == 0:
-                print(f'Time {t}: avg fit {total_fitness/self.nb_indivs}')
+                print(f'Time {start_time + t}: avg fit {total_fitness/self.nb_indivs}')
 
         return self.best_indivs
