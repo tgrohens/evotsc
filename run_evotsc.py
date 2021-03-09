@@ -10,12 +10,25 @@ intergene = 1000
 interaction_dist = 2500
 interaction_coef = 0.3
 default_basal_expression = 1.0
-nb_eval_steps=51
+nb_eval_steps = 51
 beta_A = 0.0
 beta_B = 0.25
 nb_genes = 60
 nb_indivs = 250
 save_step = 50
+
+def print_params(output_dir):
+    with open(f'{output_dir}/params.txt', 'w') as params_file:
+        params_file.write(f'intergene: {intergene}\n')
+        params_file.write(f'interaction_dist: {interaction_dist}\n')
+        params_file.write(f'interaction_coef: {interaction_coef}\n')
+        params_file.write(f'default_basal_expression: {default_basal_expression}\n')
+        params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
+        params_file.write(f'beta_A: {beta_A}\n')
+        params_file.write(f'beta_B: {beta_B}\n')
+        params_file.write(f'nb_genes: {nb_genes}\n')
+        params_file.write(f'nb_indivs: {nb_indivs}\n')
+        params_file.write(f'save_step: {save_step}\n')
 
 
 def save(output_dir, indiv, gen):
@@ -39,6 +52,9 @@ def main():
 
     # Setup the experiment folder
     os.mkdir(output_dir)
+
+    # Save the parameters for reproducibility
+    print_params(output_dir)
 
     # Setup the initial individual and population
     init_genes = evotsc.Gene.generate(intergene=intergene,
