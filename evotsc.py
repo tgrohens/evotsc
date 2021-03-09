@@ -177,14 +177,14 @@ class Individual:
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 1:
                 target_A[i_gene] = 2.0
         full_target_A = np.repeat([target_A], repeats=target_steps, axis=0).transpose()
-        delta_A = np.sum(np.abs(expr_levels_A[:, self.nb_eval_steps-target_steps:] - full_target_A)) / (target_steps * self.nb_genes)
+        delta_A = np.sum(np.square(expr_levels_A[:, self.nb_eval_steps-target_steps:] - full_target_A)) / (target_steps * self.nb_genes)
 
         target_B = np.zeros(self.nb_genes)
         for i_gene in range(self.nb_genes):
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 2:
                 target_B[i_gene] = 2.0
         full_target_B = np.repeat([target_B], repeats=target_steps, axis=0).transpose()
-        delta_B = np.sum(np.abs(expr_levels_B[:, self.nb_eval_steps-target_steps:] - full_target_B)) / (target_steps * self.nb_genes)
+        delta_B = np.sum(np.square(expr_levels_B[:, self.nb_eval_steps-target_steps:] - full_target_B)) / (target_steps * self.nb_genes)
 
         fitness = np.exp(- selection_coef * (delta_A + delta_B))
 
