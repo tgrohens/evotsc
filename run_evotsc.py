@@ -47,6 +47,7 @@ def write_stats(stats_file, indiv, gen):
     stats_file.write(f'{gen},{indiv.fitness},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
                     f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
+    stats_file.flush()
 
 
 
