@@ -15,7 +15,7 @@ beta_A = 0.0
 beta_B = 0.25
 nb_genes = 60
 nb_indivs = 250
-save_step = 50
+save_step = 100
 
 def print_params(output_dir):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
@@ -31,14 +31,23 @@ def print_params(output_dir):
         params_file.write(f'save_step: {save_step}\n')
 
 
-def save(output_dir, indiv, gen):
+def save_indiv(output_dir, indiv, gen):
     evotsc_plot.plot_expr_AB(indiv=indiv,
                              plot_title=f'best generation {gen:05}',
                              plot_name=f'{output_dir}/plot_best_gen_{gen:05}.png')
+
     evotsc_plot.explain(indiv)
 
     with open(f'{output_dir}/best_gen_{gen:05}.evotsc', 'wb') as save_file:
         pickle.dump(indiv, save_file)
+
+
+def write_stats(stats_file, indiv, gen):
+    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize()
+    stats_file.write(f'{gen},{indiv.fitness},'
+                    f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
+                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
+
 
 
 def main():
@@ -77,17 +86,22 @@ def main():
                                    nb_indivs=nb_indivs,
                                    mutation=mutation)
 
+    stats_file = open(f'{output_dir}/stats.csv', 'w')
+    stats_file.write('Gen,Fitness,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
+                                 'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B\n')
 
-    save(output_dir, init_indiv, 0)
+    save_indiv(output_dir, init_indiv, 0)
 
-    gen = 1 # We start at 1 since the population at time 0 already exists
+    for gen in range(1, nb_generations+1):
+        best_indiv, avg_fit = population.step()
 
-    while gen < nb_generations:
-        best_indivs = population.evolve(save_step, start_time=gen)
-        gen += save_step
+        print(f'Gen {gen}: best fit {best_indiv.fitness:.5}, avg fit {avg_fit:.5}')
+        write_stats(stats_file, best_indiv, gen)
 
-        cur_best = best_indivs[-1]
-        save(output_dir, cur_best, gen)
+        if gen % save_step == 0:
+            save_indiv(output_dir, best_indiv, gen)
+
+    stats_file.close()
 
 
 if __name__ == "__main__":
