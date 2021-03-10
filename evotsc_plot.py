@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 def plot_expr(indiv, plot_title, plot_name):
 
-    temporal_expr, fitness = indiv.evaluate()
+    # Plot only environment A
+    (temporal_expr, _), fitness = indiv.evaluate()
 
     nb_genes, nb_steps = temporal_expr.shape
 
