@@ -25,6 +25,7 @@ def print_params(output_dir):
         params_file.write(f'interaction_coef: {interaction_coef}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
+        params_file.write(f'inversion_prob: {inversion_prob}')
         params_file.write(f'beta_A: {beta_A}\n')
         params_file.write(f'beta_B: {beta_B}\n')
         params_file.write(f'nb_genes: {nb_genes}\n')
