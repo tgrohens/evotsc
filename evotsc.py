@@ -76,12 +76,24 @@ class Individual:
 
     def clone(self):
         new_genes = [gene.clone() for gene in self.genes]
-        return Individual(new_genes,
-                          self.interaction_dist,
-                          self.interaction_coef,
-                          self.nb_eval_steps,
-                          self.beta_A,
-                          self.beta_B)
+        new_indiv = Individual(new_genes,
+                               self.interaction_dist,
+                               self.interaction_coef,
+                               self.nb_eval_steps,
+                               self.beta_A,
+                               self.beta_B)
+
+        new_indiv.already_evaluated = self.already_evaluated
+
+        if self.already_evaluated:
+            new_indiv.gene_positions = np.copy(self.gene_positions)
+            new_indiv.genome_size = self.genome_size
+            new_indiv.inter_matrix = np.copy(self.inter_matrix)
+            expr_A, expr_B = self.expr_levels
+            new_indiv.expr_levels = np.copy(expr_A), np.copy(expr_B)
+            new_indiv.fitness = self.fitness
+
+        return new_indiv
 
     ############ Individual evaluation
 
@@ -207,12 +219,20 @@ class Individual:
     ############ Mutational operators
 
     def mutate(self, mutation):
-        self.generate_inversion(mutation)
-        self.mutate_intergene_distances(mutation)
-        self.already_evaluated = False
+        did_mutate = False
+
+        if self.generate_inversion(mutation):
+            did_mutate = True
+
+        if self.mutate_intergene_distances(mutation):
+            did_mutate = True
+
+        if did_mutate:
+            self.already_evaluated = False
 
 
     def mutate_intergene_distances(self, mutation):
+        did_mutate = False
         for gene in self.genes:
             # Mutate the intergenic distance
             if np.random.random() < mutation.intergene_mutation_prob:
@@ -222,8 +242,13 @@ class Individual:
                 if gene.intergene + intergene_delta >= 0:
                     gene.intergene += intergene_delta
 
+                did_mutate = True
+
+        return did_mutate
+
 
     def generate_inversion(self, mutation):
+        did_mutate = False
         if np.random.random() < mutation.inversion_prob:
             self.compute_gene_positions()
             start_pos = np.random.randint(0, self.genome_size)
@@ -236,6 +261,10 @@ class Individual:
                 start_pos, end_pos = end_pos, start_pos
 
             self.perform_inversion(start_pos, end_pos)
+
+            did_mutate = True
+
+        return did_mutate
 
 
     def perform_inversion(self, start_pos, end_pos):
@@ -365,6 +394,6 @@ class Population:
             self.individuals = new_indivs
 
             if t % 10 == 0:
-                print(f'Time {start_time + t}: avg fit {total_fitness/self.nb_indivs}')
+                print(f'Time {start_time + t}: avg fit {total_fitness/self.nb_indivs:.5}, best fit {best_indiv.fitness:.5}')
 
         return self.best_indivs
