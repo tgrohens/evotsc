@@ -11,10 +11,11 @@ interaction_dist = 2500
 interaction_coef = 0.3
 default_basal_expression = 1.0
 nb_eval_steps = 51
+inversion_prob=0.5
 beta_A = 0.0
 beta_B = 0.25
 nb_genes = 60
-nb_indivs = 250
+nb_indivs = 100
 save_step = 100
 
 def print_params(output_dir):
@@ -80,7 +81,7 @@ def main():
 
     mutation = evotsc.Mutation(intergene_mutation_prob=0.0,
                                       intergene_mutation_var=0.0,
-                                      inversion_prob=1e-1)
+                                      inversion_prob=inversion_prob)
 
 
     population = evotsc.Population(init_indiv=init_indiv,
