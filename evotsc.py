@@ -393,7 +393,7 @@ class Population:
 
             self.individuals = new_indivs
 
-            if t % 10 == 0:
+            if (start_time + t) % 10 == 0:
                 print(f'Time {start_time + t}: avg fit {total_fitness/self.nb_indivs:.5}, best fit {best_indiv.fitness:.5}')
 
         return self.best_indivs
