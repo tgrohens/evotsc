@@ -346,6 +346,30 @@ class Individual:
         self.genes = new_genes
 
 
+    def summarize(self):
+        (temporal_expr_A, temporal_expr_B), fitness = self.evaluate()
+
+        ### Environment A
+        on_genes_A = np.zeros(3, dtype=int)
+        off_genes_A = np.zeros(3, dtype=int)
+        for i_gene, gene in enumerate(self.genes):
+            if temporal_expr_A[i_gene, self.nb_eval_steps-1] > 1:
+                on_genes_A[gene.gene_type] += 1
+            else:
+                off_genes_A[gene.gene_type] += 1
+
+        ### Environment B
+        on_genes_B = np.zeros(3, dtype=int)
+        off_genes_B = np.zeros(3, dtype=int)
+        for i_gene, gene in enumerate(self.genes):
+            if temporal_expr_B[i_gene, self.nb_eval_steps-1] > 1:
+                on_genes_B[gene.gene_type] += 1
+            else:
+                off_genes_B[gene.gene_type] += 1
+
+        return on_genes_A, off_genes_A, on_genes_B, off_genes_B
+
+
 class Population:
     def __init__(self, init_indiv, nb_indivs, mutation):
         # Individuals
