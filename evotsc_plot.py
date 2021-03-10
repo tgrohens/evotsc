@@ -90,31 +90,19 @@ def plot_expr_AB(indiv, plot_title, plot_name):
 def explain(indiv):
     (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate()
     nb_eval_steps = indiv.nb_eval_steps
+    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize()
 
     print(f'Fitness: {fitness:.5}')
 
     ### Environment A
     print('Environment A')
-    on_genes = np.zeros(3, dtype=int)
-    off_genes = np.zeros(3, dtype=int)
-    for i_gene, gene in enumerate(indiv.genes):
-        if temporal_expr_A[i_gene, nb_eval_steps-1] > 1:
-            on_genes[gene.gene_type] += 1
-        else:
-            off_genes[gene.gene_type] += 1
-    print(f'  A & B genes: {on_genes[0]} on, {off_genes[0]} off')
-    print(f'  A genes:     {on_genes[1]} on, {off_genes[1]} off')
-    print(f'  B genes:     {on_genes[2]} on, {off_genes[2]} off')
+    print(f'  A & B genes: {on_genes_A[0]} on, {off_genes_A[0]} off')
+    print(f'  A genes:     {on_genes_A[1]} on, {off_genes_A[1]} off')
+    print(f'  B genes:     {on_genes_A[2]} on, {off_genes_A[2]} off')
 
     ### Environment B
     print('Environment B')
-    on_genes = np.zeros(3, dtype=int)
-    off_genes = np.zeros(3, dtype=int)
-    for i_gene, gene in enumerate(indiv.genes):
-        if temporal_expr_B[i_gene, nb_eval_steps-1] > 1:
-            on_genes[gene.gene_type] += 1
-        else:
-            off_genes[gene.gene_type] += 1
-    print(f'  A & B genes: {on_genes[0]} on, {off_genes[0]} off')
-    print(f'  A genes:     {on_genes[1]} on, {off_genes[1]} off')
-    print(f'  B genes:     {on_genes[2]} on, {off_genes[2]} off')
+    print(f'  A & B genes: {on_genes_B[0]} on, {off_genes_B[0]} off')
+    print(f'  A genes:     {on_genes_B[1]} on, {off_genes_B[1]} off')
+    print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
+
