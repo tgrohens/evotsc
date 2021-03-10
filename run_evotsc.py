@@ -80,11 +80,10 @@ def main():
 
     save(output_dir, init_indiv, 0)
 
-    best_indivs = []
-    gen = 0
+    gen = 1 # We start at 1 since the population at time 0 already exists
 
     while gen < nb_generations:
-        best_indivs += population.evolve(save_step, start_time=gen)
+        best_indivs = population.evolve(save_step, start_time=gen)
         gen += save_step
 
         cur_best = best_indivs[-1]
