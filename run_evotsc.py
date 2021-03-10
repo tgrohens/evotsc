@@ -33,7 +33,7 @@ def print_params(output_dir):
 
 def save(output_dir, indiv, gen):
     evotsc_plot.plot_expr_AB(indiv=indiv,
-                             plot_title='best generation 0',
+                             plot_title=f'best generation {gen:05}',
                              plot_name=f'{output_dir}/plot_best_gen_{gen:05}.png')
     evotsc_plot.explain(indiv)
 
