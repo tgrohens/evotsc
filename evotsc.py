@@ -388,36 +388,34 @@ class Population:
             indiv.evaluate()
 
 
-    def evolve(self, nb_steps, start_time=0):
-        self.best_indivs = []
-        for t in range(nb_steps):
-            # On évalue tous les individus
-            fitnesses = np.zeros(self.nb_indivs)
-            for i_indiv, indiv in enumerate(self.individuals):
-                _, fitness = indiv.evaluate()
-                fitnesses[i_indiv] = fitness
+    def step(self):
 
-            # Sauvegarde du meilleur individu
-            best_indiv = self.individuals[np.argmax(fitnesses)]
-            self.best_indivs.append(best_indiv.clone())
+        # On évalue tous les individus
+        fitnesses = np.zeros(self.nb_indivs)
+        for i_indiv, indiv in enumerate(self.individuals):
+            _, fitness = indiv.evaluate()
+            fitnesses[i_indiv] = fitness
 
-            # Sélection de l'ancêtre de chaque individu de la nouvelle génération
-            total_fitness = np.sum(fitnesses)
-            ancestors = np.random.choice(np.arange(self.nb_indivs),
-                                         size=self.nb_indivs,
-                                         p=fitnesses/total_fitness)
+        # Sauvegarde du meilleur individu
+        best_indiv = self.individuals[np.argmax(fitnesses)].clone()
 
-            # Création de la nouvelle génération avec mutation
-            new_indivs = []
-            for i_new_indiv in range(self.nb_indivs):
-                ancestor = self.individuals[ancestors[i_new_indiv]]
-                new_indiv = ancestor.clone()
-                new_indiv.mutate(self.mutation)
-                new_indivs.append(new_indiv)
+        # Sélection de l'ancêtre de chaque individu de la nouvelle génération
+        total_fitness = np.sum(fitnesses)
+        ancestors = np.random.choice(np.arange(self.nb_indivs),
+                                        size=self.nb_indivs,
+                                        p=fitnesses/total_fitness)
 
-            self.individuals = new_indivs
+        # Création de la nouvelle génération avec mutation
+        new_indivs = []
+        for i_new_indiv in range(self.nb_indivs):
+            ancestor = self.individuals[ancestors[i_new_indiv]]
+            new_indiv = ancestor.clone()
+            new_indiv.mutate(self.mutation)
+            new_indivs.append(new_indiv)
 
-            if (start_time + t) % 10 == 0:
-                print(f'Time {start_time + t}: avg fit {total_fitness/self.nb_indivs:.5}, best fit {best_indiv.fitness:.5}')
+        self.individuals = new_indivs
 
-        return self.best_indivs
+
+        avg_fit = total_fitness/self.nb_indivs
+
+        return best_indiv, avg_fit
