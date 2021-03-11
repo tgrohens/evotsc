@@ -249,24 +249,21 @@ class Individual:
 
     def generate_inversions(self, mutation):
         did_mutate = False
-        if np.random.random() < mutation.inversion_prob:
 
-            nb_inversions = np.random.geometric(mutation.inversion_prob)
+        nb_inversions = np.random.poisson(mutation.inversion_prob)
 
-            for inv in range(nb_inversions):
-                self.compute_gene_positions()
-                start_pos = np.random.randint(0, self.genome_size)
-                end_pos = np.random.randint(0, self.genome_size)
+        for inv in range(nb_inversions):
+            self.compute_gene_positions()
+            start_pos = np.random.randint(0, self.genome_size)
+            end_pos = np.random.randint(0, self.genome_size)
 
-                #print(f'Generated inversion: {start_pos} -> {end_pos}')
+            # Inverting between start and end or between end and start is equivalent
+            if end_pos < start_pos:
+                start_pos, end_pos = end_pos, start_pos
 
-                # Inverting between start and end or between end and start is equivalent
-                if end_pos < start_pos:
-                    start_pos, end_pos = end_pos, start_pos
+            self.perform_inversion(start_pos, end_pos)
 
-                self.perform_inversion(start_pos, end_pos)
-
-                did_mutate = True
+            did_mutate = True
 
         return did_mutate
 
