@@ -121,6 +121,8 @@ class Individual:
         for i in range(self.nb_genes):
             for j in range(self.nb_genes):
 
+                # We compute the influence of gene 2/j on gene 1/i
+
                 if i == j: # It's the same gene
                     inter_matrix[i, j] = 1.0
                     continue
@@ -135,22 +137,22 @@ class Individual:
                 if pos_1 < pos_2: # -------1--2-------- ou -1---------------2-
                     if pos_2 - pos_1 < self.genome_size + pos_1 - pos_2: # -------1--2--------
                         distance = pos_2 - pos_1
-                        is_before = True
+                        i_before_j = True
                     else: # -1---------------2-
                         distance = self.genome_size + pos_1 - pos_2
-                        is_before = False
+                        i_before_j = False
 
                 else: # -------2--1-------- ou -2---------------1-
                     if pos_1 - pos_2 < self.genome_size + pos_2 - pos_1: # -------2--1--------
                         distance = pos_1 - pos_2
-                        is_before = False
+                        i_before_j = False
                     else:
                         distance = self.genome_size + pos_2 - pos_1
-                        is_before = True
+                        i_before_j = True
 
                 ## Orientations relatives
-                if ((is_before and self.genes[i].orientation == 0) or
-                    (not is_before and self.genes[j].orientation == 1)):
+                if ((i_before_j and self.genes[i].orientation == 0) or
+                    (not i_before_j and self.genes[j].orientation == 1)):
                     sign = +1
                 else:
                     sign = -1
