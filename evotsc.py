@@ -151,7 +151,7 @@ class Individual:
                         i_before_j = True
 
                 ## Orientations relatives
-                if ((i_before_j and self.genes[i].orientation == 0) or
+                if ((i_before_j and self.genes[j].orientation == 0) or
                     (not i_before_j and self.genes[j].orientation == 1)):
                     sign = +1
                 else:
