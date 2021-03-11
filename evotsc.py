@@ -30,6 +30,14 @@ class Gene:
     def generate(cls, intergene, nb_genes, default_basal_expression=None):
         genes = []
 
+        # Randomly assign 1/3 of genes to type A, B, and AB respectively
+        nb_genes_A = nb_genes // 3
+        nb_genes_B = nb_genes // 3
+        nb_genes_AB = nb_genes - (nb_genes_A + nb_genes_B)
+
+        gene_types = [0] * nb_genes_AB + [1] * nb_genes_A + [2] * nb_genes_B
+        gene_types = np.random.permutation(gene_types)
+
         for i_gene in range(nb_genes):
             if default_basal_expression is None:
                 basal_expression = np.random.random()
@@ -38,7 +46,7 @@ class Gene:
             new_gene = cls(intergene=intergene,
                            orientation=np.random.randint(2),
                            basal_expression=basal_expression,
-                           gene_type=np.random.randint(3),
+                           gene_type=gene_types[i_gene],
                            id=i_gene)
             genes.append(new_gene)
 
