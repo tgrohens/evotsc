@@ -94,8 +94,6 @@ class Individual:
         new_indiv.already_evaluated = self.already_evaluated
 
         if self.already_evaluated:
-            new_indiv.gene_positions = np.copy(self.gene_positions)
-            new_indiv.genome_size = self.genome_size
             new_indiv.inter_matrix = np.copy(self.inter_matrix)
             expr_A, expr_B = self.expr_levels
             new_indiv.expr_levels = np.copy(expr_A), np.copy(expr_B)
@@ -106,8 +104,6 @@ class Individual:
     ############ Individual evaluation
 
     def compute_gene_positions(self):
-        if self.already_evaluated:
-            return self.gene_positions, self.genome_size
 
         positions = np.zeros(self.nb_genes, dtype=int)
         cur_pos = 0
@@ -116,14 +112,11 @@ class Individual:
             positions[i_gene] = cur_pos
             cur_pos += gene.intergene
 
-        self.gene_positions = positions
-        self.genome_size = cur_pos
-
-        return self.gene_positions, self.genome_size
+        return positions, cur_pos
 
 
     def compute_inter_matrix(self):
-        self.compute_gene_positions()
+        gene_positions, genome_size = self.compute_gene_positions()
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
         for i in range(self.nb_genes):
@@ -135,27 +128,27 @@ class Individual:
                     inter_matrix[i, j] = 1.0
                     continue
 
-                pos_1 = self.gene_positions[i]
-                pos_2 = self.gene_positions[j]
+                pos_1 = gene_positions[i]
+                pos_2 = gene_positions[j]
 
                 ## On veut savoir si le gène 1 est avant le gène 2 ou après
                 # Avant : -------1--2-------- ou -2---------------1-
                 # Après : -------2--1-------- ou -1---------------2-
 
                 if pos_1 < pos_2: # -------1--2-------- ou -1---------------2-
-                    if pos_2 - pos_1 < self.genome_size + pos_1 - pos_2: # -------1--2--------
+                    if pos_2 - pos_1 < genome_size + pos_1 - pos_2: # -------1--2--------
                         distance = pos_2 - pos_1
                         i_before_j = True
                     else: # -1---------------2-
-                        distance = self.genome_size + pos_1 - pos_2
+                        distance = genome_size + pos_1 - pos_2
                         i_before_j = False
 
                 else: # -------2--1-------- ou -2---------------1-
-                    if pos_1 - pos_2 < self.genome_size + pos_2 - pos_1: # -------2--1--------
+                    if pos_1 - pos_2 < genome_size + pos_2 - pos_1: # -------2--1--------
                         distance = pos_1 - pos_2
                         i_before_j = False
                     else:
-                        distance = self.genome_size + pos_2 - pos_1
+                        distance = genome_size + pos_2 - pos_1
                         i_before_j = True
 
                 ## Orientations relatives
@@ -263,9 +256,10 @@ class Individual:
         nb_inversions = np.random.poisson(mutation.inversion_prob)
 
         for inv in range(nb_inversions):
-            self.compute_gene_positions()
-            start_pos = np.random.randint(0, self.genome_size)
-            end_pos = np.random.randint(0, self.genome_size)
+            gene_positions, genome_size = self.compute_gene_positions()
+
+            start_pos = np.random.randint(0, genome_size)
+            end_pos = np.random.randint(0, genome_size)
 
             # Inverting between start and end or between end and start is equivalent
             if end_pos < start_pos:
