@@ -1,24 +1,30 @@
 import numpy as np
+from typing import List, Tuple
 
 # Class that holds all the mutation parameters
 class Mutation:
     def __init__(self,
-                 intergene_mutation_prob,
-                 intergene_mutation_var,
-                 inversion_prob):
+                 intergene_mutation_prob: float,
+                 intergene_mutation_var: float,
+                 inversion_prob: float) -> None:
         self.intergene_mutation_prob = intergene_mutation_prob
         self.intergene_mutation_var = intergene_mutation_var
         self.inversion_prob = inversion_prob
 
 class Gene:
-    def __init__(self, intergene, orientation, basal_expression, gene_type, id):
+    def __init__(self,
+                 intergene: int,
+                 orientation: int,
+                 basal_expression: float,
+                 gene_type: int,
+                 id: int) -> None:
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.basal_expression = basal_expression  # Initial expression level
         self.gene_type = gene_type                # Should the gene be active in env. A, B, or both
         self.id = id                              # Track genes through inversions
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f'ID: {self.id}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
@@ -27,7 +33,10 @@ class Gene:
 
     # Generate a list of random genes
     @classmethod
-    def generate(cls, intergene, nb_genes, default_basal_expression=None):
+    def generate(cls,
+                 intergene: int,
+                 nb_genes: int,
+                 default_basal_expression: float = None) -> 'Gene':
         genes = []
 
         # Randomly assign 1/3 of genes to type A, B, and AB respectively
@@ -53,7 +62,7 @@ class Gene:
         return genes
 
 
-    def clone(self):
+    def clone(self) -> 'Gene':
         return Gene(intergene=self.intergene,
                     orientation=self.orientation,
                     basal_expression=self.basal_expression,
@@ -62,7 +71,13 @@ class Gene:
 
 
 class Individual:
-    def __init__(self, genes, interaction_dist, interaction_coef, nb_eval_steps, beta_A, beta_B):
+    def __init__(self,
+                 genes: List[Gene],
+                 interaction_dist: float,
+                 interaction_coef: float,
+                 nb_eval_steps: int,
+                 beta_A: float,
+                 beta_B: float) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
@@ -74,7 +89,7 @@ class Individual:
         self.already_evaluated = False
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         gene_pos, total_len = self.compute_gene_positions()
         repr_str = f'length: {total_len}\n'
         for i_gene, gene in enumerate(self.genes):
@@ -82,7 +97,7 @@ class Individual:
         return repr_str
 
 
-    def clone(self):
+    def clone(self) -> 'Individual':
         new_genes = [gene.clone() for gene in self.genes]
         new_indiv = Individual(new_genes,
                                self.interaction_dist,
@@ -103,7 +118,7 @@ class Individual:
 
     ############ Individual evaluation
 
-    def compute_gene_positions(self):
+    def compute_gene_positions(self) -> Tuple[int, np.ndarray]:
 
         positions = np.zeros(self.nb_genes, dtype=int)
         cur_pos = 0
@@ -115,7 +130,7 @@ class Individual:
         return positions, cur_pos
 
 
-    def compute_inter_matrix(self):
+    def compute_inter_matrix(self) -> np.ndarray:
         gene_positions, genome_size = self.compute_gene_positions()
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
@@ -165,7 +180,7 @@ class Individual:
         return inter_matrix
 
 
-    def run_system(self, beta):
+    def run_system(self, beta: float) -> np.ndarray:
         temporal_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
 
         # Initial values at t = 0
@@ -179,7 +194,7 @@ class Individual:
         return temporal_expr
 
 
-    def compute_fitness(self):
+    def compute_fitness(self) -> float:
         # On renvoie la moyenne de (valeur d'expression - target)
         # sur les 5 derniers pas de temps et sur les gènes
         target_steps = 5
@@ -206,7 +221,7 @@ class Individual:
         return fitness
 
 
-    def evaluate(self):
+    def evaluate(self) -> Tuple[np.ndarray, float]:
         if self.already_evaluated:
             return self.expr_levels, self.fitness
 
@@ -221,7 +236,7 @@ class Individual:
 
     ############ Mutational operators
 
-    def mutate(self, mutation):
+    def mutate(self, mutation: Mutation) -> None:
         did_mutate = False
 
         if self.generate_inversions(mutation):
@@ -234,7 +249,7 @@ class Individual:
             self.already_evaluated = False
 
 
-    def mutate_intergene_distances(self, mutation):
+    def mutate_intergene_distances(self, mutation: Mutation) -> bool:
         did_mutate = False
         for gene in self.genes:
             # Mutate the intergenic distance
@@ -250,7 +265,7 @@ class Individual:
         return did_mutate
 
 
-    def generate_inversions(self, mutation):
+    def generate_inversions(self, mutation: Mutation) -> bool:
         did_mutate = False
 
         nb_inversions = np.random.poisson(mutation.inversion_prob)
@@ -272,7 +287,7 @@ class Individual:
         return did_mutate
 
 
-    def perform_inversion(self, start_pos, end_pos):
+    def perform_inversion(self, start_pos: int, end_pos: int) -> None:
         gene_positions, total_length = self.compute_gene_positions()
 
         # Dernier gène avant l'inversion
@@ -351,7 +366,7 @@ class Individual:
         self.genes = new_genes
 
 
-    def summarize(self):
+    def summarize(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         (temporal_expr_A, temporal_expr_B), fitness = self.evaluate()
 
         ### Environment A
@@ -376,7 +391,10 @@ class Individual:
 
 
 class Population:
-    def __init__(self, init_indiv, nb_indivs, mutation):
+    def __init__(self,
+                 init_indiv: Individual,
+                 nb_indivs: int,
+                 mutation: Mutation) -> None:
         # Individuals
         self.individuals = []
         self.nb_indivs = nb_indivs
@@ -388,12 +406,12 @@ class Population:
         self.mutation = mutation
 
 
-    def evaluate(self):
+    def evaluate(self) -> None:
         for indiv in self.individuals:
             indiv.evaluate()
 
 
-    def step(self):
+    def step(self) -> Tuple[Individual, float]:
 
         # On évalue tous les individus
         fitnesses = np.zeros(self.nb_indivs)
