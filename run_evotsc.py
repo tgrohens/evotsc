@@ -124,12 +124,14 @@ def main():
         # Get rid of the stats that happened between the last save and the crash
         os.rename(f'{output_dir}/stats.csv', f'{output_dir}/old_stats.csv')
 
-        old_stats_file = open(f'{output_dir}/old_stats.csv')
+        old_stats_path = f'{output_dir}/old_stats.csv'
+        old_stats_file = open(old_stats_path)
         stats_file = open(f'{output_dir}/stats.csv', 'w')
         for gen in range(start_gen+1):
             stats_file.write(old_stats_file.readline())
 
         old_stats_file.close()
+        os.remove(old_stats_path)
 
 
     for gen in range(start_gen, nb_generations+1):
