@@ -135,7 +135,7 @@ class Individual:
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
         for i in range(self.nb_genes):
-            for j in range(self.nb_genes):
+            for j in range(i, self.nb_genes):
 
                 # We compute the influence of gene 2/j on gene 1/i
 
@@ -166,16 +166,31 @@ class Individual:
                         distance = genome_size + pos_2 - pos_1
                         i_before_j = True
 
-                ## Orientations relatives
-                if ((i_before_j and self.genes[j].orientation == 0) or
-                    (not i_before_j and self.genes[j].orientation == 1)):
-                    sign = +1
+                if i_before_j:
+                    if self.genes[j].orientation == 0: # j leading: +
+                        sign_2_on_1 = +1
+                    else:
+                        sign_2_on_1 = -1
+                    if self.genes[i].orientation == 1: # i lagging : +
+                        sign_1_on_2 = +1
+                    else:
+                        sign_1_on_2 = -1
                 else:
-                    sign = -1
+                    if self.genes[j].orientation == 1: # j lagging : +
+                        sign_2_on_1 = +1
+                    else:
+                        sign_2_on_1 = -1
+                    if self.genes[i].orientation == 0: # i leading : +
+                        sign_1_on_2 = +1
+                    else:
+                        sign_1_on_2 = -1
+
 
                 strength = max(1 - distance/self.interaction_dist, 0)
 
-                inter_matrix[i, j] = sign * strength * self.interaction_coef
+                inter_matrix[i, j] = sign_2_on_1 * strength * self.interaction_coef
+                inter_matrix[j, i] = sign_1_on_2 * strength * self.interaction_coef
+
 
         return inter_matrix
 
