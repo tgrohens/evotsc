@@ -2,6 +2,7 @@ import sys
 import os
 import pickle
 import pathlib
+import re
 
 import evotsc
 import evotsc_plot
@@ -38,17 +39,17 @@ def print_params(output_dir):
 
 def save_indiv(output_dir, indiv, gen):
     evotsc_plot.plot_expr_AB(indiv=indiv,
-                             plot_title=f'best generation {gen:05}',
-                             plot_name=f'{output_dir}/plot_best_gen_{gen:05}.png')
+                             plot_title=f'best generation {gen:06}',
+                             plot_name=f'{output_dir}/plot_best_gen_{gen:06}.png')
 
     evotsc_plot.explain(indiv)
 
-    with open(f'{output_dir}/best_gen_{gen:05}.evotsc', 'wb') as save_file:
+    with open(f'{output_dir}/best_gen_{gen:06}.evotsc', 'wb') as save_file:
         pickle.dump(indiv, save_file)
 
 
 def save_pop(output_dir, pop, gen):
-    with open(f'{output_dir}/pop_gen_{gen:05}.evotsc', 'wb') as save_file:
+    with open(f'{output_dir}/pop_gen_{gen:06}.evotsc', 'wb') as save_file:
         pickle.dump(pop, save_file)
 
 
@@ -118,7 +119,7 @@ def main():
     else:
         save_files = [f for f in output_dir.iterdir() if 'pop_gen' in f.name]
         last_save_path = sorted(save_files)[-1]
-        start_gen = int(last_save_path.name[-12:-7]) + 1# skip the `.evotsc`
+        start_gen = int(re.search(r'\d+', last_save_path.name).group(0)) + 1
         population = load_pop(last_save_path)
 
         # Get rid of the stats that happened between the last save and the crash
