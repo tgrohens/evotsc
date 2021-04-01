@@ -11,15 +11,18 @@ import evotsc_plot
 intergene = 1000
 interaction_dist = 2500
 interaction_coef = 0.3
-default_basal_expression = 1.0
+sigma_basal = -0.06
+sigma_opt = -0.06
+epsilon = 0.03
+default_basal_expression = 0.5
 nb_eval_steps = 51
-inversion_prob=2.0 # It's the parameter of a Poisson law
-beta_A = 0.15
-beta_B = 0.30
+sigma_A = -0.1
+sigma_B = 0.1
 nb_genes = 60
 nb_indivs = 100
-save_best_step = 100
-save_full_step = 1000
+inversion_prob = 2.0
+save_best_step = 500
+save_full_step = 5000
 
 def print_params(output_dir):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
@@ -29,8 +32,8 @@ def print_params(output_dir):
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         params_file.write(f'inversion_prob: {inversion_prob}\n')
-        params_file.write(f'beta_A: {beta_A}\n')
-        params_file.write(f'beta_B: {beta_B}\n')
+        params_file.write(f'sigma_A: {sigma_A}\n')
+        params_file.write(f'sigma_B: {sigma_B}\n')
         params_file.write(f'nb_genes: {nb_genes}\n')
         params_file.write(f'nb_indivs: {nb_indivs}\n')
         params_file.write(f'save_best_step: {save_best_step}\n')
@@ -39,10 +42,12 @@ def print_params(output_dir):
 
 def save_indiv(output_dir, indiv, gen):
     evotsc_plot.plot_expr_AB(indiv=indiv,
+                             sigma_A=sigma_A,
+                             sigma_B=sigma_B,
                              plot_title=f'best generation {gen:06}',
                              plot_name=f'{output_dir}/plot_best_gen_{gen:06}.png')
 
-    evotsc_plot.explain(indiv)
+    evotsc_plot.explain(indiv, sigma_A, sigma_B)
 
     with open(f'{output_dir}/best_gen_{gen:06}.evotsc', 'wb') as save_file:
         pickle.dump(indiv, save_file)
@@ -59,7 +64,7 @@ def load_pop(pop_path):
 
 
 def write_stats(stats_file, indiv, gen):
-    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize()
+    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
     stats_file.write(f'{gen},{indiv.fitness},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
                     f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
@@ -90,24 +95,27 @@ def main():
 
         # Setup the initial individual and population
         init_genes = evotsc.Gene.generate(intergene=intergene,
-                                        nb_genes=nb_genes,
-                                        default_basal_expression=default_basal_expression)
+                                          nb_genes=nb_genes,
+                                          default_basal_expression=default_basal_expression)
 
         init_indiv = evotsc.Individual(genes=init_genes,
-                                    interaction_dist=interaction_dist,
-                                    interaction_coef=interaction_coef,
-                                    nb_eval_steps=nb_eval_steps,
-                                    beta_A=beta_A,
-                                    beta_B=beta_B)
+                                       interaction_dist=interaction_dist,
+                                       interaction_coef=interaction_coef,
+                                       nb_eval_steps=nb_eval_steps,
+                                       sigma_basal=sigma_basal,
+                                       sigma_opt=sigma_opt,
+                                       epsilon=epsilon)
 
         mutation = evotsc.Mutation(intergene_mutation_prob=0.0,
-                                        intergene_mutation_var=0.0,
-                                        inversion_prob=inversion_prob)
+                                   intergene_mutation_var=0.0,
+                                   inversion_prob=inversion_prob)
 
 
         population = evotsc.Population(init_indiv=init_indiv,
-                                    nb_indivs=nb_indivs,
-                                    mutation=mutation)
+                                       nb_indivs=nb_indivs,
+                                       mutation=mutation,
+                                       sigma_A=sigma_A,
+                                       sigma_B=sigma_B)
 
         stats_file = open(f'{output_dir}/stats.csv', 'w')
         stats_file.write('Gen,Fitness,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
