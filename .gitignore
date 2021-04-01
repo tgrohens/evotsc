@@ -3,6 +3,7 @@
 .DS_Store
 __pycache__
 *.cprof
+.vscode
 
 EvoTSC.ipynb
 Genome.ipynb
