@@ -31,6 +31,8 @@ def plot_expr(indiv, plot_title, plot_name):
 
     plt.savefig(plot_name, dpi=300, bbox_inches='tight')
 
+    plt.close()
+
 
 def plot_expr_AB(indiv, plot_title, plot_name):
 
@@ -84,8 +86,9 @@ def plot_expr_AB(indiv, plot_title, plot_name):
 
     plt.tight_layout()
 
-
     plt.savefig(plot_name, dpi=300, bbox_inches='tight')
+
+    plt.close()
 
 
 def explain(indiv):
