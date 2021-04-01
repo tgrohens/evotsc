@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-def plot_expr(indiv, plot_title, plot_name):
+def plot_expr(indiv, sigma_env, plot_title, plot_name):
 
     # Plot only environment A
-    (temporal_expr, _), fitness = indiv.evaluate()
+    (temporal_expr, _), fitness = indiv.evaluate(sigma_env, sigma_env)
 
     nb_genes, nb_steps = temporal_expr.shape
 
@@ -13,7 +13,7 @@ def plot_expr(indiv, plot_title, plot_name):
 
     plt.figure(figsize=(9, 8), dpi=200)
 
-    plt.ylim(-0.1, 2.1)
+    plt.ylim(-0.05, 1.05)
 
     for gene in range(nb_genes):
         linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
@@ -34,9 +34,9 @@ def plot_expr(indiv, plot_title, plot_name):
     plt.close()
 
 
-def plot_expr_AB(indiv, plot_title, plot_name):
+def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
-    (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate()
+    (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate(sigma_A, sigma_B)
 
     colors_A = ['tab:green', 'tab:green', 'tab:red'] # A & B or A are valid
     colors_B = ['tab:green', 'tab:red', 'tab:green'] # A & B or B are valid
@@ -45,7 +45,7 @@ def plot_expr_AB(indiv, plot_title, plot_name):
 
     ## First subplot: environment A
     plt.subplot(2, 1, 1)
-    plt.ylim(-0.1, 2.1)
+    plt.ylim(-0.05, 1.05)
 
     for gene in range(indiv.nb_genes):
         linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
@@ -64,7 +64,7 @@ def plot_expr_AB(indiv, plot_title, plot_name):
 
     ## Second subplot: environment B
     plt.subplot(2, 1, 2)
-    plt.ylim(-0.1, 2.1)
+    plt.ylim(-0.05, 1.05)
 
     for gene in range(indiv.nb_genes):
         linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
@@ -91,10 +91,10 @@ def plot_expr_AB(indiv, plot_title, plot_name):
     plt.close()
 
 
-def explain(indiv):
-    (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate()
+def explain(indiv, sigma_A, sigma_B):
+    (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate(sigma_A, sigma_B)
     nb_eval_steps = indiv.nb_eval_steps
-    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize()
+    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
 
     print(f'Fitness: {fitness:.5}')
 

@@ -76,15 +76,17 @@ class Individual:
                  interaction_dist: float,
                  interaction_coef: float,
                  nb_eval_steps: int,
-                 beta_A: float,
-                 beta_B: float) -> None:
+                 sigma_basal: float,
+                 sigma_opt: float,
+                 epsilon: float) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
         self.interaction_coef = interaction_coef
+        self.sigma_basal = sigma_basal
+        self.sigma_opt = sigma_opt
+        self.epsilon = epsilon
         self.nb_eval_steps = nb_eval_steps
-        self.beta_A = beta_A
-        self.beta_B = beta_B
 
         self.already_evaluated = False
 
@@ -103,8 +105,9 @@ class Individual:
                                self.interaction_dist,
                                self.interaction_coef,
                                self.nb_eval_steps,
-                               self.beta_A,
-                               self.beta_B)
+                               self.sigma_basal,
+                               self.sigma_opt,
+                               self.epsilon)
 
         new_indiv.already_evaluated = self.already_evaluated
 
@@ -140,7 +143,7 @@ class Individual:
                 # We compute the influence of gene 2/j on gene 1/i
 
                 if i == j: # It's the same gene
-                    inter_matrix[i, j] = 1.0
+                    inter_matrix[i, j] = 0.0
                     continue
 
                 pos_1 = gene_positions[i]
@@ -191,11 +194,12 @@ class Individual:
                 inter_matrix[i, j] = sign_2_on_1 * strength * self.interaction_coef
                 inter_matrix[j, i] = sign_1_on_2 * strength * self.interaction_coef
 
+        inter_matrix = -inter_matrix # Negative sigma -> more transcription
 
         return inter_matrix
 
 
-    def run_system(self, beta: float) -> np.ndarray:
+    def run_system(self, sigma_env: float) -> np.ndarray:
         temporal_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
 
         # Initial values at t = 0
@@ -203,8 +207,9 @@ class Individual:
 
         # Iterate the system
         for t in range(1, self.nb_eval_steps):
-            eval_interm = self.inter_matrix @ temporal_expr[:, t-1]
-            temporal_expr[:, t] = np.tanh(2.0 * (eval_interm - 1.0) + beta) + 1.0
+            sigma_local = self.inter_matrix @ temporal_expr[:, t-1]
+            sigma_total = self.sigma_basal + sigma_local + sigma_env
+            temporal_expr[:, t] = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
 
         return temporal_expr
 
@@ -220,14 +225,14 @@ class Individual:
         target_A = np.zeros(self.nb_genes)
         for i_gene in range(self.nb_genes):
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 1:
-                target_A[i_gene] = 2.0
+                target_A[i_gene] = 1.0
         full_target_A = np.repeat([target_A], repeats=target_steps, axis=0).transpose()
         delta_A = np.sum(np.square(expr_levels_A[:, self.nb_eval_steps-target_steps:] - full_target_A)) / (target_steps * self.nb_genes)
 
         target_B = np.zeros(self.nb_genes)
         for i_gene in range(self.nb_genes):
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 2:
-                target_B[i_gene] = 2.0
+                target_B[i_gene] = 1.0
         full_target_B = np.repeat([target_B], repeats=target_steps, axis=0).transpose()
         delta_B = np.sum(np.square(expr_levels_B[:, self.nb_eval_steps-target_steps:] - full_target_B)) / (target_steps * self.nb_genes)
 
@@ -236,13 +241,13 @@ class Individual:
         return fitness
 
 
-    def evaluate(self) -> Tuple[np.ndarray, float]:
+    def evaluate(self, sigma_A: float, sigma_B: float) -> Tuple[np.ndarray, float]:
         if self.already_evaluated:
             return self.expr_levels, self.fitness
 
         self.inter_matrix = self.compute_inter_matrix()
 
-        self.expr_levels = self.run_system(self.beta_A), self.run_system(self.beta_B)
+        self.expr_levels = self.run_system(sigma_A), self.run_system(sigma_B)
         self.fitness = self.compute_fitness()
 
         self.already_evaluated = True
@@ -381,14 +386,16 @@ class Individual:
         self.genes = new_genes
 
 
-    def summarize(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        (temporal_expr_A, temporal_expr_B), fitness = self.evaluate()
+    def summarize(self,
+                  sigma_A: float,
+                  sigma_B: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        (temporal_expr_A, temporal_expr_B), fitness = self.evaluate(sigma_A, sigma_B)
 
         ### Environment A
         on_genes_A = np.zeros(3, dtype=int)
         off_genes_A = np.zeros(3, dtype=int)
         for i_gene, gene in enumerate(self.genes):
-            if temporal_expr_A[i_gene, self.nb_eval_steps-1] > 1:
+            if temporal_expr_A[i_gene, self.nb_eval_steps-1] > 0.5:
                 on_genes_A[gene.gene_type] += 1
             else:
                 off_genes_A[gene.gene_type] += 1
@@ -397,7 +404,7 @@ class Individual:
         on_genes_B = np.zeros(3, dtype=int)
         off_genes_B = np.zeros(3, dtype=int)
         for i_gene, gene in enumerate(self.genes):
-            if temporal_expr_B[i_gene, self.nb_eval_steps-1] > 1:
+            if temporal_expr_B[i_gene, self.nb_eval_steps-1] > 0.5:
                 on_genes_B[gene.gene_type] += 1
             else:
                 off_genes_B[gene.gene_type] += 1
@@ -409,7 +416,9 @@ class Population:
     def __init__(self,
                  init_indiv: Individual,
                  nb_indivs: int,
-                 mutation: Mutation) -> None:
+                 mutation: Mutation,
+                 sigma_A: float,
+                 sigma_B: float) -> None:
         # Individuals
         self.individuals = []
         self.nb_indivs = nb_indivs
@@ -420,10 +429,14 @@ class Population:
         # Mutation operators
         self.mutation = mutation
 
+        # Environment
+        self.sigma_A = sigma_A
+        self.sigma_B = sigma_B
+
 
     def evaluate(self) -> None:
         for indiv in self.individuals:
-            indiv.evaluate()
+            indiv.evaluate(self.sigma_A, self.sigma_B)
 
 
     def step(self) -> Tuple[Individual, float]:
@@ -431,7 +444,7 @@ class Population:
         # On évalue tous les individus
         fitnesses = np.zeros(self.nb_indivs)
         for i_indiv, indiv in enumerate(self.individuals):
-            _, fitness = indiv.evaluate()
+            _, fitness = indiv.evaluate(self.sigma_A, self.sigma_B)
             fitnesses[i_indiv] = fitness
 
         # Sauvegarde du meilleur individu
@@ -452,7 +465,6 @@ class Population:
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs
-
 
         avg_fit = total_fitness/self.nb_indivs
 
