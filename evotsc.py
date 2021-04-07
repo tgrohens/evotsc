@@ -328,7 +328,8 @@ class Individual:
 
         #print(f'start_i: {start_i}, end_i: {end_i}')
 
-        if start_i == end_i: # Pas de gène à inverser
+         # Pas de gène à inverser
+        if (start_i == end_i) or (start_i == -1 and end_i == self.nb_genes - 1):
             return
 
         # Avant :     start_pos                    end_pos
