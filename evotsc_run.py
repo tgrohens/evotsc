@@ -5,6 +5,8 @@ import pickle
 import pathlib
 import re
 
+import numpy as np
+
 import evotsc
 import evotsc_plot
 
@@ -27,8 +29,9 @@ basal_sc_mutation_var = 1e-4
 save_best_step = 500
 save_full_step = 5000
 
-def print_params(output_dir):
+def print_params(output_dir, seed):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
+        params_file.write(f'seed: {seed}\n')
         params_file.write(f'intergene: {intergene}\n')
         params_file.write(f'interaction_dist: {interaction_dist}\n')
         params_file.write(f'interaction_coef: {interaction_coef}\n')
@@ -87,6 +90,8 @@ def main():
                             help='output directory')
     arg_parser.add_argument('--neutral', action='store_true',
                             help='run without selection')
+    arg_parser.add_argument('-s', '--seed', type=int,
+                            help='seed for the RNG')
     args = arg_parser.parse_args()
 
     nb_generations = int(args.generations)
@@ -104,13 +109,21 @@ def main():
 
     if first_start:
 
+        # Create the RNG seed
+        seed = args.seed
+        if not seed:
+            seed = np.random.randint(1e9)
+        rng = np.random.default_rng(seed=seed)
+
         # Save the parameters for reproducibility
-        print_params(output_dir)
+        print_params(output_dir, seed)
 
         # Setup the initial individual and population
         init_genes = evotsc.Gene.generate(intergene=intergene,
                                           nb_genes=nb_genes,
-                                          default_basal_expression=default_basal_expression)
+                                          default_basal_expression=default_basal_expression,
+                                          rng=rng)
+
 
         init_indiv = evotsc.Individual(genes=init_genes,
                                        interaction_dist=interaction_dist,
@@ -118,7 +131,9 @@ def main():
                                        nb_eval_steps=nb_eval_steps,
                                        sigma_basal=sigma_basal,
                                        sigma_opt=sigma_opt,
-                                       epsilon=epsilon)
+                                       epsilon=epsilon,
+                                       rng=rng)
+
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
@@ -128,7 +143,9 @@ def main():
                                        nb_indivs=nb_indivs,
                                        mutation=mutation,
                                        sigma_A=sigma_A,
-                                       sigma_B=sigma_B)
+                                       sigma_B=sigma_B,
+                                       rng=rng)
+
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')

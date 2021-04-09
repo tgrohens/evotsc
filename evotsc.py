@@ -40,7 +40,12 @@ class Gene:
     def generate(cls,
                  intergene: int,
                  nb_genes: int,
-                 default_basal_expression: float = None) -> 'Gene':
+                 default_basal_expression: float = None,
+                 rng: np.random.Generator = None) -> 'Gene':
+
+        if not rng:
+            rng = np.random.default_rng()
+
         genes = []
 
         # Randomly assign 1/3 of genes to type A, B, and AB respectively
@@ -49,15 +54,15 @@ class Gene:
         nb_genes_AB = nb_genes - (nb_genes_A + nb_genes_B)
 
         gene_types = [0] * nb_genes_AB + [1] * nb_genes_A + [2] * nb_genes_B
-        gene_types = np.random.permutation(gene_types)
+        gene_types = rng.permutation(gene_types)
 
         for i_gene in range(nb_genes):
             if default_basal_expression is None:
-                basal_expression = np.random.random()
+                basal_expression = rng.random()
             else:
                 basal_expression = default_basal_expression
             new_gene = cls(intergene=intergene,
-                           orientation=np.random.randint(2),
+                           orientation=rng.integers(2),
                            basal_expression=basal_expression,
                            gene_type=gene_types[i_gene],
                            id=i_gene)
@@ -82,7 +87,8 @@ class Individual:
                  nb_eval_steps: int,
                  sigma_basal: float,
                  sigma_opt: float,
-                 epsilon: float) -> None:
+                 epsilon: float,
+                 rng: np.random.Generator = None) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
@@ -91,6 +97,11 @@ class Individual:
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
         self.nb_eval_steps = nb_eval_steps
+
+        if rng:
+            self.rng = rng
+        else:
+            self.rng = np.random.default_rng()
 
         self.already_evaluated = False
 
@@ -111,7 +122,8 @@ class Individual:
                                self.nb_eval_steps,
                                self.sigma_basal,
                                self.sigma_opt,
-                               self.epsilon)
+                               self.epsilon,
+                               self.rng)
 
         new_indiv.already_evaluated = self.already_evaluated
 
@@ -280,8 +292,8 @@ class Individual:
         did_mutate = False
         for gene in self.genes:
             # Mutate the intergenic distance
-            if np.random.random() < mutation.intergene_mutation_prob:
-                intergene_delta = np.random.normal(loc=0, scale=mutation.intergene_mutation_var)
+            if self.rng.random() < mutation.intergene_mutation_prob:
+                intergene_delta = self.rng.normal(loc=0, scale=mutation.intergene_mutation_var)
                 intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
 
                 if gene.intergene + intergene_delta >= 0:
@@ -295,8 +307,8 @@ class Individual:
     def mutate_basal_sc(self, mutation: Mutation) -> bool:
         did_mutate = False
 
-        if np.random.random() < mutation.basal_sc_mutation_prob:
-            basal_sc_delta = np.random.normal(loc=0, scale=mutation.basal_sc_mutation_var)
+        if self.rng.random() < mutation.basal_sc_mutation_prob:
+            basal_sc_delta = self.rng.normal(loc=0, scale=mutation.basal_sc_mutation_var)
 
             self.sigma_basal += basal_sc_delta
 
@@ -308,13 +320,13 @@ class Individual:
     def generate_inversions(self, mutation: Mutation) -> bool:
         did_mutate = False
 
-        nb_inversions = np.random.poisson(mutation.inversion_prob)
+        nb_inversions = self.rng.poisson(mutation.inversion_prob)
 
         for inv in range(nb_inversions):
             gene_positions, genome_size = self.compute_gene_positions()
 
-            start_pos = np.random.randint(0, genome_size)
-            end_pos = np.random.randint(0, genome_size)
+            start_pos = self.rng.integers(0, genome_size)
+            end_pos = self.rng.integers(0, genome_size)
 
             # Inverting between start and end or between end and start is equivalent
             if end_pos < start_pos:
@@ -439,7 +451,8 @@ class Population:
                  nb_indivs: int,
                  mutation: Mutation,
                  sigma_A: float,
-                 sigma_B: float) -> None:
+                 sigma_B: float,
+                 rng: np.random.Generator = None) -> None:
         # Individuals
         self.individuals = []
         self.nb_indivs = nb_indivs
@@ -448,6 +461,11 @@ class Population:
             self.individuals.append(indiv)
 
         # Mutation operators
+        if rng:
+            self.rng = rng
+        else:
+            self.rng = np.random.default_rng()
+
         self.mutation = mutation
 
         # Environment
@@ -473,9 +491,9 @@ class Population:
 
         # Sélection de l'ancêtre de chaque individu de la nouvelle génération
         total_fitness = np.sum(fitnesses)
-        ancestors = np.random.choice(np.arange(self.nb_indivs),
-                                        size=self.nb_indivs,
-                                        p=fitnesses/total_fitness)
+        ancestors = self.rng.choice(np.arange(self.nb_indivs),
+                                    size=self.nb_indivs,
+                                    p=fitnesses/total_fitness)
 
         # Création de la nouvelle génération avec mutation
         new_indivs = []
@@ -495,7 +513,7 @@ class Population:
     def neutral_step(self) -> Tuple[Individual, float]:
 
         # Pick random ancestors
-        ancestors = np.random.choice(np.arange(self.nb_indivs), size=self.nb_indivs)
+        ancestors = self.rng.choice(np.arange(self.nb_indivs), size=self.nb_indivs)
 
         # New generation
         new_indivs = []
