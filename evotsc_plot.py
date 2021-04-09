@@ -110,3 +110,109 @@ def explain(indiv, sigma_A, sigma_B):
     print(f'  A genes:     {on_genes_B[1]} on, {off_genes_B[1]} off')
     print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
 
+
+def plot_genome(indiv, name=None):
+
+    # Compute gene positions
+    gene_pos = np.zeros(len(indiv.genes), dtype=int)
+    cur_pos = 0
+
+    for i_gene, gene in enumerate(indiv.genes):
+        gene_pos[i_gene] = cur_pos
+        cur_pos += gene.intergene
+        #print(f'Position gène {i_gene}: {cur_pos}')
+    genome_length = cur_pos
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(9,9), dpi=200)
+
+    rect_width = 0.04
+    rect_height = 0.1
+
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-1.5, 1.5)
+    circle = plt.Circle(xy=(0, 0), radius=1, linestyle='-', fill=False)
+    ax.add_patch(circle)
+    ax.set_axis_off()
+
+
+    colors = ['tab:blue', 'tab:red', 'tab:green'] # AB: blue, A: red, B: green
+    labels = ['AB', 'A', 'B']
+
+    for i_gene, gene in enumerate(indiv.genes):
+        pos_angle = 360 * gene_pos[i_gene] / genome_length
+        orient_angle = 360 - pos_angle
+        pos_rad = np.radians(pos_angle)
+        orient_rad = np.radians(orient_angle)
+
+        ## Plot the gene rectangle
+
+        x0 = (1.0 - rect_height / 2.0) * np.sin(pos_rad)
+        y0 = (1.0 - rect_height / 2.0) * np.cos(pos_rad)
+
+
+        if gene.orientation == 0:
+            final_width = rect_width
+        else:
+            final_width = -rect_width
+
+
+        rect = plt.Rectangle(xy=(x0, y0),
+                             width=final_width,
+                             height=rect_height,
+                             angle=orient_angle, #in degrees anti-clockwise about xy.
+                             facecolor=colors[gene.gene_type],
+                             edgecolor='black',
+                             label=f'Gene {i_gene}')
+
+        ax.add_patch(rect)
+
+        ## Plot the orientation bar and arrow
+
+        # Bar
+        x_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.sin(pos_rad)
+        y_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.cos(pos_rad)
+
+        plt.plot(x_lin, y_lin, color='black', linewidth=1)
+
+        # Arrow
+        dx_arr = rect_width * np.cos(pos_rad) / 3.0
+        dy_arr = - rect_width * np.sin(pos_rad) / 3.0
+
+        if gene.orientation == 1: # Reverse
+            dx_arr, dy_arr = -dx_arr, -dy_arr
+
+        plt.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
+
+
+        # Plot the interaction distance
+        left_angle = 360 - 360 * (gene_pos[i_gene] - indiv.interaction_dist) / genome_length
+        right_angle = 360 - 360 * (gene_pos[i_gene] + indiv.interaction_dist) / genome_length
+        #print(f'Gene {i_gene}')
+        #print(f'  Position corrigée: {orient_angle}')
+        #print(f'  Position zone gauche: {left_angle}')
+        #print(f'  Position zone droite: {right_angle}')
+
+        arc = mpl.patches.Arc(xy=(0, 0),
+                                  width=0.9,
+                                  height=0.9,
+                                  theta1=left_angle,
+                                  theta2=pos_angle)
+        #ax.add_patch(arc)
+
+    ## Legend
+    patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
+               for color, label in zip(colors, labels)]
+    plt.legend(handles=patches, title='Gene type', loc='center')
+
+    line_len = np.pi*indiv.interaction_dist/genome_length
+    line_y = -0.3
+    plt.plot([-line_len, line_len], [line_y, line_y],
+             color='black',
+             linewidth=1)
+    plt.text(0, line_y - 0.07, 'Gene interaction distance', ha='center')
+
+    if name:
+        plt.savefig(name, dpi=300, bbox_inches='tight')
+
+    plt.close()
