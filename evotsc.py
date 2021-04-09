@@ -300,14 +300,12 @@ class Individual:
             if end_pos < start_pos:
                 start_pos, end_pos = end_pos, start_pos
 
-            self.perform_inversion(start_pos, end_pos)
-
-            did_mutate = True
+            did_mutate = self.perform_inversion(start_pos, end_pos)
 
         return did_mutate
 
 
-    def perform_inversion(self, start_pos: int, end_pos: int) -> None:
+    def perform_inversion(self, start_pos: int, end_pos: int) -> bool:
         gene_positions, total_length = self.compute_gene_positions()
 
         # Dernier gène avant l'inversion
@@ -335,7 +333,7 @@ class Individual:
 
          # Pas de gène à inverser
         if (start_i == end_i) or (start_i == -1 and end_i == self.nb_genes - 1):
-            return
+            return False
 
         # Avant :     start_pos                    end_pos
         # ----[---]------||-----[---]-...-[---]------||-----[---]---
@@ -385,6 +383,8 @@ class Individual:
         new_genes[start_i].intergene = a + c
 
         self.genes = new_genes
+
+        return True
 
 
     def summarize(self,
