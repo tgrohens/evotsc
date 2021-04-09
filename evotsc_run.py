@@ -22,6 +22,8 @@ sigma_B = -0.1
 nb_genes = 60
 nb_indivs = 100
 inversion_prob = 2.0
+basal_sc_mutation_prob = 1e-1
+basal_sc_mutation_var = 1e-4
 save_best_step = 500
 save_full_step = 5000
 
@@ -33,6 +35,8 @@ def print_params(output_dir):
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         params_file.write(f'inversion_prob: {inversion_prob}\n')
+        params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
+        params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
         params_file.write(f'sigma_A: {sigma_A}\n')
         params_file.write(f'sigma_B: {sigma_B}\n')
         params_file.write(f'nb_genes: {nb_genes}\n')
@@ -68,7 +72,8 @@ def write_stats(stats_file, indiv, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
     stats_file.write(f'{gen},{indiv.fitness},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
-                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
+                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]},'
+                    f'{indiv.sigma_basal}\n')
     stats_file.flush()
 
 
@@ -115,10 +120,9 @@ def main():
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon)
 
-        mutation = evotsc.Mutation(intergene_mutation_prob=0.0,
-                                   intergene_mutation_var=0.0,
+        mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
+                                   basal_sc_mutation_var=basal_sc_mutation_var,
                                    inversion_prob=inversion_prob)
-
 
         population = evotsc.Population(init_indiv=init_indiv,
                                        nb_indivs=nb_indivs,
@@ -129,10 +133,10 @@ def main():
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
             stats_file.write('Gen,Fitness,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
-                                        'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B\n')
+                                        'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B,'
+                                        'basal_sc\n')
 
             save_indiv(output_dir, init_indiv, 0)
-            write_stats(stats_file, init_indiv, 0)
 
     else:
         save_files = [f for f in output_dir.iterdir() if 'pop_gen' in f.name]

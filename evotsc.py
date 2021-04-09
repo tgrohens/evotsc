@@ -4,11 +4,15 @@ from typing import List, Tuple
 # Class that holds all the mutation parameters
 class Mutation:
     def __init__(self,
-                 intergene_mutation_prob: float,
-                 intergene_mutation_var: float,
-                 inversion_prob: float) -> None:
+                 intergene_mutation_prob: float = 0.0,
+                 intergene_mutation_var: float = 0.0,
+                 basal_sc_mutation_prob: float = 0.0,
+                 basal_sc_mutation_var: float = 0.0,
+                 inversion_prob: float = 0.0) -> None:
         self.intergene_mutation_prob = intergene_mutation_prob
         self.intergene_mutation_var = intergene_mutation_var
+        self.basal_sc_mutation_prob = basal_sc_mutation_prob
+        self.basal_sc_mutation_var = basal_sc_mutation_var
         self.inversion_prob = inversion_prob
 
 class Gene:
@@ -262,6 +266,9 @@ class Individual:
         if self.generate_inversions(mutation):
             did_mutate = True
 
+        if self.mutate_basal_sc(mutation):
+            did_mutate = True
+
         if self.mutate_intergene_distances(mutation):
             did_mutate = True
 
@@ -281,6 +288,19 @@ class Individual:
                     gene.intergene += intergene_delta
 
                 did_mutate = True
+
+        return did_mutate
+
+
+    def mutate_basal_sc(self, mutation: Mutation) -> bool:
+        did_mutate = False
+
+        if np.random.random() < mutation.basal_sc_mutation_prob:
+            basal_sc_delta = np.random.normal(loc=0, scale=mutation.basal_sc_mutation_var)
+
+            self.sigma_basal += basal_sc_delta
+
+            did_mutate = True
 
         return did_mutate
 
