@@ -470,3 +470,21 @@ class Population:
         avg_fit = total_fitness/self.nb_indivs
 
         return best_indiv, avg_fit
+
+    # Perform a step without selection
+    def neutral_step(self) -> Tuple[Individual, float]:
+
+        # Pick random ancestors
+        ancestors = np.random.choice(np.arange(self.nb_indivs), size=self.nb_indivs)
+
+        # New generation
+        new_indivs = []
+        for i_new_indiv in range(self.nb_indivs):
+            ancestor = self.individuals[ancestors[i_new_indiv]]
+            new_indiv = ancestor.clone()
+            new_indiv.mutate(self.mutation)
+            new_indivs.append(new_indiv)
+
+        self.individuals = new_indivs
+
+        return self.individuals[0], 0.0
