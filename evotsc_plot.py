@@ -111,7 +111,7 @@ def explain(indiv, sigma_A, sigma_B):
     print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
 
 
-def plot_genome(indiv, name=None):
+def plot_genome(indiv, print_ids=False, name=None):
 
     # Compute gene positions
     gene_pos = np.zeros(len(indiv.genes), dtype=int)
@@ -184,21 +184,11 @@ def plot_genome(indiv, name=None):
 
         plt.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
+        ## Print gene ID
+        if print_ids:
+            plt.text(x=0.92*x0, y=0.92*y0, s=f'{gene.id}', rotation=orient_angle, ha='left', va='bottom',
+                     rotation_mode='anchor', fontweight='bold')
 
-        # Plot the interaction distance
-        left_angle = 360 - 360 * (gene_pos[i_gene] - indiv.interaction_dist) / genome_length
-        right_angle = 360 - 360 * (gene_pos[i_gene] + indiv.interaction_dist) / genome_length
-        #print(f'Gene {i_gene}')
-        #print(f'  Position corrigée: {orient_angle}')
-        #print(f'  Position zone gauche: {left_angle}')
-        #print(f'  Position zone droite: {right_angle}')
-
-        arc = mpl.patches.Arc(xy=(0, 0),
-                                  width=0.9,
-                                  height=0.9,
-                                  theta1=left_angle,
-                                  theta2=pos_angle)
-        #ax.add_patch(arc)
 
     ## Legend
     patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
@@ -211,6 +201,8 @@ def plot_genome(indiv, name=None):
              color='black',
              linewidth=1)
     plt.text(0, line_y - 0.07, 'Gene interaction distance', ha='center')
+
+    plt.show()
 
     if name:
         plt.savefig(name, dpi=300, bbox_inches='tight')
