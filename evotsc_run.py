@@ -44,11 +44,16 @@ def get_git_hash():
 
 def print_params(output_dir, seed):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
+        # Meta
         params_file.write(f'commit: {get_git_hash()}\n')
         params_file.write(f'seed: {seed}\n')
+        # Actual parameters
         params_file.write(f'intergene: {intergene}\n')
         params_file.write(f'interaction_dist: {interaction_dist}\n')
         params_file.write(f'interaction_coef: {interaction_coef}\n')
+        params_file.write(f'sigma_basal: {sigma_basal}\n')
+        params_file.write(f'sigma_opt: {sigma_opt}\n')
+        params_file.write(f'epsilon: {epsilon}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         params_file.write(f'inversion_prob: {inversion_prob}\n')
