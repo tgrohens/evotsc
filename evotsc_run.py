@@ -1,9 +1,9 @@
-import sys
 import os
 import argparse
 import pickle
 import pathlib
 import re
+import subprocess
 
 import numpy as np
 
@@ -29,8 +29,22 @@ basal_sc_mutation_var = 1e-4
 save_best_step = 500
 save_full_step = 5000
 
+def get_git_hash():
+    git_path = pathlib.Path(__file__).parent.absolute()
+    git_ref_raw = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=git_path)
+    git_ref = str(git_ref_raw, "utf-8").strip()
+    status_raw = subprocess.check_output(['git', 'status', '-s'], cwd=git_path)
+    status = str(status_raw, "utf-8").strip()
+
+    if status != '':
+        git_ref += '-dirty'
+
+    return git_ref
+
+
 def print_params(output_dir, seed):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
+        params_file.write(f'commit: {get_git_hash()}\n')
         params_file.write(f'seed: {seed}\n')
         params_file.write(f'intergene: {intergene}\n')
         params_file.write(f'interaction_dist: {interaction_dist}\n')
