@@ -23,7 +23,7 @@ sigma_A = 0.1
 sigma_B = -0.1
 nb_genes = 60
 nb_indivs = 100
-inversion_prob = 2.0
+inversion_param = 2.0
 basal_sc_mutation_prob = 1e-1
 basal_sc_mutation_var = 1e-4
 save_best_step = 500
@@ -56,7 +56,7 @@ def print_params(output_dir, seed):
         params_file.write(f'epsilon: {epsilon}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
-        params_file.write(f'inversion_prob: {inversion_prob}\n')
+        params_file.write(f'inversion_param: {inversion_param}\n')
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
         params_file.write(f'sigma_A: {sigma_A}\n')
@@ -156,7 +156,7 @@ def main():
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
-                                   inversion_prob=inversion_prob)
+                                   inversion_param=inversion_param)
 
         population = evotsc.Population(init_indiv=init_indiv,
                                        nb_indivs=nb_indivs,
