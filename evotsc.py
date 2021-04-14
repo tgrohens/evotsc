@@ -332,7 +332,8 @@ class Individual:
             if end_pos < start_pos:
                 start_pos, end_pos = end_pos, start_pos
 
-            did_mutate = self.perform_inversion(start_pos, end_pos)
+            if self.perform_inversion(start_pos, end_pos):
+                did_mutate = True
 
         return did_mutate
 
