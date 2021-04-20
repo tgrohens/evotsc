@@ -24,6 +24,8 @@ sigma_B = -0.1
 nb_genes = 60
 nb_indivs = 100
 inversion_param = 2.0
+intergene_mutation_prob = 0.0
+intergene_mutation_var = 0.0
 basal_sc_mutation_prob = 1e-1
 basal_sc_mutation_var = 1e-4
 save_best_step = 500
@@ -57,6 +59,8 @@ def print_params(output_dir, seed):
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         params_file.write(f'inversion_param: {inversion_param}\n')
+        params_file.write(f'intergene_mutation_prob: {intergene_mutation_prob}\n')
+        params_file.write(f'intergene_mutation_var: {intergene_mutation_var}\n')
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
         params_file.write(f'sigma_A: {sigma_A}\n')
@@ -92,7 +96,8 @@ def load_pop(pop_path):
 
 def write_stats(stats_file, indiv, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
-    stats_file.write(f'{gen},{indiv.fitness},'
+    _, genome_size = indiv.compute_gene_positions()
+    stats_file.write(f'{gen},{indiv.fitness},{genome_size},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
                     f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]},'
                     f'{indiv.sigma_basal}\n')
@@ -156,6 +161,8 @@ def main():
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
+                                   intergene_mutation_prob=intergene_mutation_prob,
+                                   intergene_mutation_var=intergene_mutation_var,
                                    inversion_param=inversion_param)
 
         population = evotsc.Population(init_indiv=init_indiv,
@@ -168,7 +175,7 @@ def main():
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
-            stats_file.write('Gen,Fitness,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
+            stats_file.write('Gen,Fitness,Genome size,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
                                         'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B,'
                                         'basal_sc\n')
 
