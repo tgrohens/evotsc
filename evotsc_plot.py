@@ -2,6 +2,11 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+label_fontsize=20
+tick_fontsize=15
+legend_fontsize=15
+dpi=300
+
 def plot_expr(indiv, sigma_env, plot_title, plot_name):
 
     # Plot only environment A
@@ -11,7 +16,7 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
 
     colors = mpl.cm.get_cmap('viridis', nb_genes)(range(nb_genes))
 
-    plt.figure(figsize=(9, 8), dpi=200)
+    plt.figure(figsize=(9, 8), dpi=dpi)
 
     plt.ylim(-0.05, 1.05)
 
@@ -38,10 +43,9 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
     (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate(sigma_A, sigma_B)
 
-    colors_A = ['tab:green', 'tab:green', 'tab:red'] # A & B or A are valid
-    colors_B = ['tab:green', 'tab:red', 'tab:green'] # A & B or B are valid
+    colors = ['tab:blue', 'tab:red', 'tab:green'] # AB: blue, A: red, B: green
 
-    plt.figure(figsize=(9, 6), dpi=200)
+    plt.figure(figsize=(9, 8), dpi=dpi)
 
     ## First subplot: environment A
     plt.subplot(2, 1, 1)
@@ -51,16 +55,19 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
         linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
         plt.plot(temporal_expr_A[indiv.genes[gene].id, :],
                  linestyle=linestyle,
-                 color=colors_A[indiv.genes[gene].gene_type],
-                 alpha=0.25,
+                 linewidth=2,
+                 color=colors[indiv.genes[gene].gene_type],
+                 #alpha=0.25,
                  label=f'Gene {indiv.genes[gene].id}')
 
     plt.grid(linestyle=':')
     #plt.xlabel('Time', fontsize='large')
-    plt.ylabel('Expression level', fontsize='large')
+    plt.ylabel('Expression level', fontsize=label_fontsize)
+
+    plt.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
     #plt.legend(loc='center right')
-    plt.title('Environment A')
+    #plt.title('Environment A')
 
     ## Second subplot: environment B
     plt.subplot(2, 1, 2)
@@ -70,23 +77,28 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
         linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
         plt.plot(temporal_expr_B[indiv.genes[gene].id, :],
                  linestyle=linestyle,
-                 color=colors_B[indiv.genes[gene].gene_type],
-                 alpha=0.25,
+                 linewidth=2,
+                 color=colors[indiv.genes[gene].gene_type],
+                 #alpha=0.25,
                  label=f'Gene {indiv.genes[gene].id}')
 
     plt.grid(linestyle=':')
-    plt.xlabel('Time', fontsize='large')
-    plt.ylabel('Expression level', fontsize='large')
+    plt.xlabel('Time', fontsize=label_fontsize)
+    plt.ylabel('Expression level', fontsize=label_fontsize)
+
+    plt.tick_params(axis='both', which='major', labelsize=tick_fontsize)
 
     #plt.legend(loc='center right')
-    plt.title('Environment B')
+    #plt.title('Environment B')
 
     ## Final stuff
     plt.suptitle(f'{plot_title} fitness: {fitness:.5}')
 
     plt.tight_layout()
 
-    plt.savefig(plot_name, dpi=300, bbox_inches='tight')
+    plt.savefig(plot_name, dpi=dpi, bbox_inches='tight')
+
+    plt.show()
 
     plt.close()
 
@@ -124,7 +136,7 @@ def plot_genome(indiv, print_ids=False, name=None):
     genome_length = cur_pos
 
     # Plot
-    fig, ax = plt.subplots(figsize=(9,9), dpi=200)
+    fig, ax = plt.subplots(figsize=(9,9), dpi=dpi)
 
     rect_width = 0.04
     rect_height = 0.1
@@ -202,9 +214,9 @@ def plot_genome(indiv, print_ids=False, name=None):
              linewidth=1)
     plt.text(0, line_y - 0.07, 'Gene interaction distance', ha='center')
 
-    plt.show()
-
     if name:
         plt.savefig(name, dpi=300, bbox_inches='tight')
+
+    plt.show()
 
     plt.close()
