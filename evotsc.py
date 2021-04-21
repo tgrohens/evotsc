@@ -8,12 +8,12 @@ class Mutation:
                  intergene_mutation_var: float = 0.0,
                  basal_sc_mutation_prob: float = 0.0,
                  basal_sc_mutation_var: float = 0.0,
-                 inversion_param: float = 0.0) -> None:
+                 inversion_poisson_lam: float = 0.0) -> None:
         self.intergene_poisson_lam = intergene_poisson_lam
         self.intergene_mutation_var = intergene_mutation_var
         self.basal_sc_mutation_prob = basal_sc_mutation_prob
         self.basal_sc_mutation_var = basal_sc_mutation_var
-        self.inversion_param = inversion_param
+        self.inversion_poisson_lam = inversion_poisson_lam
 
 class Gene:
     def __init__(self,
@@ -323,7 +323,7 @@ class Individual:
     def generate_inversions(self, mutation: Mutation) -> bool:
         did_mutate = False
 
-        nb_inversions = self.rng.poisson(mutation.inversion_param)
+        nb_inversions = self.rng.poisson(mutation.inversion_poisson_lam)
 
         for inv in range(nb_inversions):
             gene_positions, genome_size = self.compute_gene_positions()
