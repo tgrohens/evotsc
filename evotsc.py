@@ -4,12 +4,12 @@ from typing import List, Tuple
 # Class that holds all the mutation parameters
 class Mutation:
     def __init__(self,
-                 intergene_mutation_prob: float = 0.0,
+                 intergene_poisson_lam: float = 0.0,
                  intergene_mutation_var: float = 0.0,
                  basal_sc_mutation_prob: float = 0.0,
                  basal_sc_mutation_var: float = 0.0,
                  inversion_param: float = 0.0) -> None:
-        self.intergene_mutation_prob = intergene_mutation_prob
+        self.intergene_poisson_lam = intergene_poisson_lam
         self.intergene_mutation_var = intergene_mutation_var
         self.basal_sc_mutation_prob = basal_sc_mutation_prob
         self.basal_sc_mutation_var = basal_sc_mutation_var
@@ -290,15 +290,18 @@ class Individual:
 
     def mutate_intergene_distances(self, mutation: Mutation) -> bool:
         did_mutate = False
-        for gene in self.genes:
-            # Mutate the intergenic distance
-            if self.rng.random() < mutation.intergene_mutation_prob:
-                intergene_delta = self.rng.normal(loc=0, scale=mutation.intergene_mutation_var)
-                intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
 
-                if gene.intergene + intergene_delta >= 0:
-                    gene.intergene += intergene_delta
+        nb_mutations = self.rng.poisson(mutation.intergene_poisson_lam)
 
+        for i_mut in range(nb_mutations):
+
+            i_gene = self.rng.integers(self.nb_genes)
+            intergene_delta = self.rng.normal(loc=0, scale=mutation.intergene_mutation_var)
+            intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
+
+            # We don't allow an intergene of 0 because otherwise the genes can't be separated anymore
+            if self.genes[i_gene].intergene + intergene_delta > 0:
+                self.genes[i_gene].intergene += intergene_delta
                 did_mutate = True
 
         return did_mutate

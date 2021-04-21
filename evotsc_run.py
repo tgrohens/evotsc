@@ -24,8 +24,8 @@ sigma_B = -0.1
 nb_genes = 60
 nb_indivs = 100
 inversion_param = 2.0
-intergene_mutation_prob = 0.0
-intergene_mutation_var = 0.0
+intergene_poisson_lam = 2.0
+intergene_mutation_var = 1e1
 basal_sc_mutation_prob = 1e-1
 basal_sc_mutation_var = 1e-4
 save_best_step = 500
@@ -59,7 +59,7 @@ def print_params(output_dir, seed):
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         params_file.write(f'inversion_param: {inversion_param}\n')
-        params_file.write(f'intergene_mutation_prob: {intergene_mutation_prob}\n')
+        params_file.write(f'intergene_poisson_lam: {intergene_poisson_lam}\n')
         params_file.write(f'intergene_mutation_var: {intergene_mutation_var}\n')
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
@@ -161,7 +161,7 @@ def main():
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
-                                   intergene_mutation_prob=intergene_mutation_prob,
+                                   intergene_poisson_lam=intergene_poisson_lam,
                                    intergene_mutation_var=intergene_mutation_var,
                                    inversion_param=inversion_param)
 
