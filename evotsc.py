@@ -162,27 +162,27 @@ class Individual:
                     inter_matrix[i, j] = 0.0
                     continue
 
-                pos_1 = gene_positions[i]
-                pos_2 = gene_positions[j]
+                pos_1_minus_2 = gene_positions[i] - gene_positions[j]
+                pos_2_minus_1 = - pos_1_minus_2
 
                 ## On veut savoir si le gène 1 est avant le gène 2 ou après
                 # Avant : -------1--2-------- ou -2---------------1-
                 # Après : -------2--1-------- ou -1---------------2-
 
-                if pos_1 < pos_2: # -------1--2-------- ou -1---------------2-
-                    if pos_2 - pos_1 < genome_size + pos_1 - pos_2: # -------1--2--------
-                        distance = pos_2 - pos_1
+                if pos_1_minus_2 < 0: # -------1--2-------- ou -1---------------2-
+                    if pos_2_minus_1 < genome_size + pos_1_minus_2: # -------1--2--------
+                        distance = pos_2_minus_1
                         i_before_j = True
                     else: # -1---------------2-
-                        distance = genome_size + pos_1 - pos_2
+                        distance = genome_size + pos_1_minus_2
                         i_before_j = False
 
                 else: # -------2--1-------- ou -2---------------1-
-                    if pos_1 - pos_2 < genome_size + pos_2 - pos_1: # -------2--1--------
-                        distance = pos_1 - pos_2
+                    if pos_1_minus_2 < genome_size + pos_2_minus_1: # -------2--1--------
+                        distance = pos_1_minus_2
                         i_before_j = False
                     else:
-                        distance = genome_size + pos_2 - pos_1
+                        distance = genome_size + pos_2_minus_1
                         i_before_j = True
 
                 # Exit early if genes are too far
