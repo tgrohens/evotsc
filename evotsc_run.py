@@ -28,8 +28,8 @@ intergene_poisson_lam = 2.0
 intergene_mutation_var = 1e1
 basal_sc_mutation_prob = 1e-1
 basal_sc_mutation_var = 1e-4
-save_best_step = 500
-save_full_step = 5000
+save_best_step = 2000
+save_full_step = 10000
 
 def get_git_hash():
     git_path = pathlib.Path(__file__).parent.absolute()
