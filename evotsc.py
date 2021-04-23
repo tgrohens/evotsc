@@ -185,6 +185,12 @@ class Individual:
                         distance = genome_size + pos_2 - pos_1
                         i_before_j = True
 
+                # Exit early if genes are too far
+                if distance > self.interaction_dist:
+                    inter_matrix[i, j] = 0.0
+                    inter_matrix[j, i] = 0.0
+                    continue
+
                 if i_before_j:
                     if self.genes[j].orientation == 0: # j leading: +
                         sign_2_on_1 = +1
@@ -204,8 +210,8 @@ class Individual:
                     else:
                         sign_1_on_2 = -1
 
-
-                strength = max(1 - distance/self.interaction_dist, 0)
+                # Here, we know that distance <= self.interaction_dist
+                strength = 1.0 - distance/self.interaction_dist
 
                 inter_matrix[i, j] = sign_2_on_1 * strength * self.interaction_coef
                 inter_matrix[j, i] = sign_1_on_2 * strength * self.interaction_coef
