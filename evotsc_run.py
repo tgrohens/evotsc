@@ -10,7 +10,12 @@ import numpy as np
 import evotsc
 import evotsc_plot
 
-# Constants
+## Constants
+# Population
+nb_indivs = 100
+nb_genes = 60
+
+# Genome
 intergene = 1000
 interaction_dist = 2500
 interaction_coef = 0.3
@@ -19,17 +24,22 @@ sigma_opt = -0.06
 epsilon = 0.03
 default_basal_expression = 0.5
 nb_eval_steps = 51
+
+# Environment
 sigma_A = 0.1
 sigma_B = -0.1
-nb_genes = 60
-nb_indivs = 100
+
+# Mutations
 inversion_poisson_lam = 2.0
 intergene_poisson_lam = 0.0 #2.0
 intergene_mutation_var = 0.0 #1e1
 basal_sc_mutation_prob = 1e-1
 basal_sc_mutation_var = 1e-4
+
+# Logging
 save_best_step = 2000
 save_full_step = 10000
+
 
 def get_git_hash():
     git_path = pathlib.Path(__file__).parent.absolute()
@@ -49,7 +59,10 @@ def print_params(output_dir, seed):
         # Meta
         params_file.write(f'commit: {get_git_hash()}\n')
         params_file.write(f'seed: {seed}\n')
-        # Actual parameters
+        # Population
+        params_file.write(f'nb_indivs: {nb_indivs}\n')
+        params_file.write(f'nb_genes: {nb_genes}\n')
+        # Genome
         params_file.write(f'intergene: {intergene}\n')
         params_file.write(f'interaction_dist: {interaction_dist}\n')
         params_file.write(f'interaction_coef: {interaction_coef}\n')
@@ -58,15 +71,16 @@ def print_params(output_dir, seed):
         params_file.write(f'epsilon: {epsilon}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
+        # Environment
+        params_file.write(f'sigma_A: {sigma_A}\n')
+        params_file.write(f'sigma_B: {sigma_B}\n')
+        # Mutations
         params_file.write(f'inversion_poisson_lam: {inversion_poisson_lam}\n')
         params_file.write(f'intergene_poisson_lam: {intergene_poisson_lam}\n')
         params_file.write(f'intergene_mutation_var: {intergene_mutation_var}\n')
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
-        params_file.write(f'sigma_A: {sigma_A}\n')
-        params_file.write(f'sigma_B: {sigma_B}\n')
-        params_file.write(f'nb_genes: {nb_genes}\n')
-        params_file.write(f'nb_indivs: {nb_indivs}\n')
+        # Logging
         params_file.write(f'save_best_step: {save_best_step}\n')
         params_file.write(f'save_full_step: {save_full_step}\n')
 
