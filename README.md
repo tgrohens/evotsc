@@ -14,3 +14,7 @@ You can change parameter values at the top of the `evotsc_run.py` file.
 The seed used for each simulation is output in the `output_folder/params.txt` file.
 
 To reproduce a run, you can pass the seed to the program with the `-s SEED` parameter.
+
+## ALIFE21 submission
+
+The exact code used for the simulations in the Alife21 paper, as well as the Jupyter notebooks analyzing the resulting data, can be found at ba6abd606.
