@@ -295,6 +295,11 @@ class Individual:
 
 
     def mutate_intergene_distances(self, mutation: Mutation) -> bool:
+
+        # Exit early if we don't have intergene mutations in this run
+        if mutation.intergene_poisson_lam == 0.0:
+            return False
+
         did_mutate = False
 
         nb_mutations = self.rng.poisson(mutation.intergene_poisson_lam)
@@ -314,6 +319,11 @@ class Individual:
 
 
     def mutate_basal_sc(self, mutation: Mutation) -> bool:
+
+        # Exit early if we don't have SC mutations in this run
+        if mutation.basal_sc_mutation_prob == 0.0:
+            return False
+
         did_mutate = False
 
         if self.rng.random() < mutation.basal_sc_mutation_prob:
