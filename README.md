@@ -4,7 +4,7 @@ Individual-based evolutionary simulation of the transcription-supercoiling coupl
 
 To run an experiment with the default parameters, just run:
 ```
-python3 evotsc_run.py -o `output_folder` -n `nb_generations`
+python3 path/to/evotsc_run.py -o `output_folder` -n `nb_generations`
 ```
 
 You can change parameter values at the top of the `evotsc_run.py` file.
