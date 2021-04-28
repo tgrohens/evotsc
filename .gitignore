@@ -3,3 +3,8 @@
 .DS_Store
 __pycache__
 *.cprof
+
+EvoTSC.ipynb
+Genome.ipynb
+Results.ipynb
+Sandbox.ipynb
