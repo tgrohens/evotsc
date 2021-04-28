@@ -13,13 +13,13 @@ interaction_dist = 2500
 interaction_coef = 0.3
 default_basal_expression = 1.0
 nb_eval_steps = 51
-inversion_prob=2.0 # It's the parameter of a Poisson law
+inversion_prob = 2.0 # It's the parameter of a Poisson law
 beta_A = 0.15
 beta_B = 0.30
 nb_genes = 60
 nb_indivs = 100
-save_best_step = 100
-save_full_step = 1000
+save_best_step = 2000
+save_full_step = 10000
 
 def print_params(output_dir):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
