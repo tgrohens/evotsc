@@ -306,14 +306,19 @@ class Individual:
 
         for i_mut in range(nb_mutations):
 
-            i_gene = self.rng.integers(self.nb_genes)
             intergene_delta = self.rng.normal(loc=0, scale=mutation.intergene_mutation_var)
             intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
 
-            # We don't allow an intergene of 0 because otherwise the genes can't be separated anymore
-            if self.genes[i_gene].intergene + intergene_delta > 0:
-                self.genes[i_gene].intergene += intergene_delta
-                did_mutate = True
+            # Try genes until we find one where we can perform the indel
+            found_gene = False
+
+            while not found_gene:
+                i_gene = self.rng.integers(self.nb_genes)
+                if self.genes[i_gene].intergene + intergene_delta > 0:
+                    self.genes[i_gene].intergene += intergene_delta
+                    found_gene = True
+
+            did_mutate = True
 
         return did_mutate
 
