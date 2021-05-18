@@ -449,11 +449,14 @@ class Individual:
                   sigma_B: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         (temporal_expr_A, temporal_expr_B), fitness = self.evaluate(sigma_A, sigma_B)
 
+        target_steps = 5
+
         ### Environment A
         on_genes_A = np.zeros(3, dtype=int)
         off_genes_A = np.zeros(3, dtype=int)
+        avg_expr_A = np.sum(temporal_expr_A[:, self.nb_eval_steps-target_steps:], axis=1) / target_steps
         for i_gene, gene in enumerate(self.genes):
-            if temporal_expr_A[i_gene, self.nb_eval_steps-1] > 0.5:
+            if avg_expr_A[i_gene] > 0.5:
                 on_genes_A[gene.gene_type] += 1
             else:
                 off_genes_A[gene.gene_type] += 1
@@ -461,8 +464,9 @@ class Individual:
         ### Environment B
         on_genes_B = np.zeros(3, dtype=int)
         off_genes_B = np.zeros(3, dtype=int)
+        avg_expr_B = np.sum(temporal_expr_B[:, self.nb_eval_steps-target_steps:], axis=1) / target_steps
         for i_gene, gene in enumerate(self.genes):
-            if temporal_expr_B[i_gene, self.nb_eval_steps-1] > 0.5:
+            if avg_expr_B[i_gene] > 0.5:
                 on_genes_B[gene.gene_type] += 1
             else:
                 off_genes_B[gene.gene_type] += 1
