@@ -98,8 +98,6 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
     plt.savefig(plot_name, dpi=dpi, bbox_inches='tight')
 
-    plt.show()
-
     plt.close()
 
 
