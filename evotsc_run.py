@@ -86,6 +86,7 @@ def print_params(output_dir, seed):
 
 
 def save_indiv(output_dir, indiv, gen):
+    # Note: this evaluates the individual
     evotsc_plot.plot_expr_AB(indiv=indiv,
                              sigma_A=sigma_A,
                              sigma_B=sigma_B,
@@ -99,6 +100,9 @@ def save_indiv(output_dir, indiv, gen):
 
 
 def save_pop(output_dir, pop, gen):
+    # At this stage, we have a new non-evaluated population, so let's
+    # evaluate everyone to have consistent save files
+    pop.evaluate()
     with open(f'{output_dir}/pop_gen_{gen:06}.evotsc', 'wb') as save_file:
         pickle.dump(pop, save_file)
 
