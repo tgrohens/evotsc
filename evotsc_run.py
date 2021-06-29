@@ -33,8 +33,8 @@ sigma_B = -0.1
 inversion_poisson_lam = 2.0
 intergene_poisson_lam = 0.0 #2.0
 intergene_mutation_var = 0.0 #1e1
-basal_sc_mutation_prob = 1e-1
-basal_sc_mutation_var = 1e-4
+basal_sc_mutation_prob = 0.0 #1e-1
+basal_sc_mutation_var = 0.0 #1e-4
 
 # Logging
 save_best_step = 2000
