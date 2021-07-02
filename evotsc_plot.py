@@ -51,14 +51,14 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.subplot(2, 1, 1)
     plt.ylim(-0.05, 1.05)
 
-    for gene in range(indiv.nb_genes):
-        linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
-        plt.plot(temporal_expr_A[indiv.genes[gene].id, :],
+    for i_gene, gene in enumerate(indiv.genes):
+        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        plt.plot(temporal_expr_A[i_gene, :],
                  linestyle=linestyle,
                  linewidth=2,
-                 color=colors[indiv.genes[gene].gene_type],
+                 color=colors[gene.gene_type],
                  #alpha=0.25,
-                 label=f'Gene {indiv.genes[gene].id}')
+                 label=f'Gene {gene.id}')
 
     plt.grid(linestyle=':')
     #plt.xlabel('Time', fontsize='large')
@@ -73,14 +73,14 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.subplot(2, 1, 2)
     plt.ylim(-0.05, 1.05)
 
-    for gene in range(indiv.nb_genes):
-        linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
-        plt.plot(temporal_expr_B[indiv.genes[gene].id, :],
+    for i_gene, gene in enumerate(indiv.genes):
+        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        plt.plot(temporal_expr_B[i_gene, :],
                  linestyle=linestyle,
                  linewidth=2,
-                 color=colors[indiv.genes[gene].gene_type],
+                 color=colors[gene.gene_type],
                  #alpha=0.25,
-                 label=f'Gene {indiv.genes[gene].id}')
+                 label=f'Gene {gene.id}')
 
     plt.grid(linestyle=':')
     plt.xlabel('Time', fontsize=label_fontsize)
