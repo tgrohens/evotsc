@@ -232,9 +232,6 @@ def main():
             print(f'Gen {gen}: best fit {best_indiv.fitness:.5}, avg fit {avg_fit:.5}')
             write_stats(stats_file, best_indiv, gen)
 
-            if gen % save_best_step == 0:
-                save_indiv(output_dir, best_indiv, gen)
-
             if gen % save_full_step == 0:
                 save_pop(output_dir, population, gen)
 
