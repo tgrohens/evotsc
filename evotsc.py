@@ -509,32 +509,34 @@ class Population:
 
     def step(self) -> Tuple[Individual, float]:
 
-        # On évalue tous les individus
-        fitnesses = np.zeros(self.nb_indivs)
-        for i_indiv, indiv in enumerate(self.individuals):
-            _, fitness = indiv.evaluate(self.sigma_A, self.sigma_B)
-            fitnesses[i_indiv] = fitness
-
-        # Sauvegarde du meilleur individu
-        best_indiv = self.individuals[np.argmax(fitnesses)].clone()
+        # We start from an already-evaluated population, from which we:
+        # - select reproducers
+        # - create new individuals with mutations
+        # - evaluate the new individuals
 
         # Sélection de l'ancêtre de chaque individu de la nouvelle génération
-        total_fitness = np.sum(fitnesses)
+        old_fitnesses = np.array([indiv.fitness for indiv in self.individuals])
+        total_fitness = np.sum(old_fitnesses)
         ancestors = self.rng.choice(np.arange(self.nb_indivs),
                                     size=self.nb_indivs,
-                                    p=fitnesses/total_fitness)
+                                    p=old_fitnesses/total_fitness)
 
-        # Création de la nouvelle génération avec mutation
+
+        # Création de la nouvelle génération avec mutation et évaluation
         new_indivs = []
         for i_new_indiv in range(self.nb_indivs):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
             new_indiv.mutate(self.mutation)
+            new_indiv.evaluate(self.sigma_A, self.sigma_B)
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs
 
-        avg_fit = total_fitness/self.nb_indivs
+        # Meilleur individu et fitness moyenne
+        new_fitnesses = np.array([indiv.fitness for indiv in new_indivs])
+        best_indiv = new_indivs[np.argmax(new_fitnesses)].clone()
+        avg_fit = np.sum(new_fitnesses)/self.nb_indivs
 
         return best_indiv, avg_fit
 

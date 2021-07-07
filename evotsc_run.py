@@ -141,7 +141,7 @@ def main():
 
 
     first_start = True
-    start_gen = 1
+    start_gen = 0
 
     # Setup the experiment folder
     try:
@@ -190,6 +190,8 @@ def main():
                                        sigma_B=sigma_B,
                                        rng=rng)
 
+        # Evaluate the initial population before the first step
+        population.evaluate()
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
@@ -197,13 +199,16 @@ def main():
                                         'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B,'
                                         'basal_sc\n')
 
-            save_indiv(output_dir, init_indiv, 0)
+            save_pop(output_dir, population, 0)
+            write_stats(stats_file, init_indiv, 0)
 
     else:
         save_files = [f for f in output_dir.iterdir() if 'pop_gen' in f.name]
         last_save_path = sorted(save_files)[-1]
-        start_gen = int(re.search(r'\d+', last_save_path.name).group(0)) + 1
+        start_gen = int(re.search(r'\d+', last_save_path.name).group(0))
         population = load_pop(last_save_path)
+        # Make sure the population has been evaluated before stepping
+        population.evaluate()
 
         if not args.neutral:
             # Get rid of the stats that happened between the last save and the crash
@@ -212,7 +217,8 @@ def main():
             old_stats_path = f'{output_dir}/old_stats.csv'
             old_stats_file = open(old_stats_path)
             stats_file = open(f'{output_dir}/stats.csv', 'w')
-            for gen in range(start_gen+1):
+            # We need to save lines 0 to start_gen -> start_gen + 1 lines
+            for gen in range(start_gen+2):
                 stats_file.write(old_stats_file.readline())
 
             old_stats_file.close()
@@ -220,7 +226,7 @@ def main():
 
 
     if not args.neutral:
-        for gen in range(start_gen, nb_generations+1):
+        for gen in range(start_gen+1, nb_generations+1):
             best_indiv, avg_fit = population.step()
 
             print(f'Gen {gen}: best fit {best_indiv.fitness:.5}, avg fit {avg_fit:.5}')
