@@ -88,6 +88,7 @@ class Individual:
                  sigma_basal: float,
                  sigma_opt: float,
                  epsilon: float,
+                 delta: float,
                  rng: np.random.Generator = None) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
@@ -96,6 +97,7 @@ class Individual:
         self.sigma_basal = sigma_basal
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
+        self.delta = delta
         self.nb_eval_steps = nb_eval_steps
 
         if rng:
@@ -123,6 +125,7 @@ class Individual:
                                self.sigma_basal,
                                self.sigma_opt,
                                self.epsilon,
+                               self.delta,
                                self.rng)
 
         new_indiv.already_evaluated = self.already_evaluated
@@ -231,7 +234,8 @@ class Individual:
         for t in range(1, self.nb_eval_steps):
             sigma_local = self.inter_matrix @ temporal_expr[:, t-1]
             sigma_total = self.sigma_basal + sigma_local + sigma_env
-            temporal_expr[:, t] = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
+            delta_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
+            temporal_expr[:, t] = delta_expr + (1 - self.delta) * temporal_expr[:, t-1]
 
         return temporal_expr
 
