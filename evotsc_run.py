@@ -22,6 +22,7 @@ interaction_coef = 0.3
 sigma_basal = -0.06
 sigma_opt = -0.06
 epsilon = 0.03
+delta = 0.9
 default_basal_expression = 0.5
 nb_eval_steps = 51
 
@@ -174,6 +175,7 @@ def main():
                                        sigma_basal=sigma_basal,
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
+                                       delta=delta,
                                        rng=rng)
 
 
