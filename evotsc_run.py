@@ -70,6 +70,7 @@ def print_params(output_dir, seed):
         params_file.write(f'sigma_basal: {sigma_basal}\n')
         params_file.write(f'sigma_opt: {sigma_opt}\n')
         params_file.write(f'epsilon: {epsilon}\n')
+        params_file.write(f'delta: {delta}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         # Environment
