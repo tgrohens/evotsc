@@ -89,6 +89,7 @@ class Individual:
                  sigma_opt: float,
                  epsilon: float,
                  delta: float,
+                 substeps: int,
                  rng: np.random.Generator = None) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
@@ -98,6 +99,7 @@ class Individual:
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
         self.delta = delta
+        self.substeps = substeps
         self.nb_eval_steps = nb_eval_steps
 
         if rng:
@@ -126,6 +128,7 @@ class Individual:
                                self.sigma_opt,
                                self.epsilon,
                                self.delta,
+                               self.substeps,
                                self.rng)
 
         new_indiv.already_evaluated = self.already_evaluated
@@ -225,20 +228,29 @@ class Individual:
 
 
     def run_system(self, sigma_env: float) -> np.ndarray:
-        temporal_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
+
+        h = 1 / self.substeps # the Euler time step
+
+        total_steps = self.substeps * self.nb_eval_steps
+
+        temporal_expr = np.zeros((self.nb_genes, total_steps))
 
         # Initial values at t = 0
         temporal_expr[:, 0] = np.array([gene.basal_expression for gene in self.genes])
 
         # Iterate the system
-        for t in range(1, self.nb_eval_steps):
+        for t in range(1, total_steps):
             sigma_local = self.inter_matrix @ temporal_expr[:, t-1]
             sigma_total = self.sigma_basal + sigma_local + sigma_env
             delta_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
-            temporal_expr[:, t] = delta_expr + (1 - self.delta) * temporal_expr[:, t-1]
+            temporal_expr[:, t] = h * delta_expr + (1 - h * self.delta) * temporal_expr[:, t-1]
 
-        return temporal_expr
+        final_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
 
+        for step in range(self.nb_eval_steps):
+            final_expr[:, step] = temporal_expr[:, self.substeps * step]
+
+        return final_expr
 
     def compute_fitness(self) -> float:
         # On renvoie la moyenne de (valeur d'expression - target)

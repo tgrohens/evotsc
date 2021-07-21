@@ -23,6 +23,7 @@ sigma_basal = -0.06
 sigma_opt = -0.06
 epsilon = 0.03
 delta = 0.9
+substeps = 5
 default_basal_expression = 0.5
 nb_eval_steps = 51
 
@@ -71,6 +72,7 @@ def print_params(output_dir, seed):
         params_file.write(f'sigma_opt: {sigma_opt}\n')
         params_file.write(f'epsilon: {epsilon}\n')
         params_file.write(f'delta: {delta}\n')
+        params_file.write(f'substeps: {substeps}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         # Environment
@@ -177,6 +179,7 @@ def main():
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
                                        delta=delta,
+                                       substeps=substeps,
                                        rng=rng)
 
 
