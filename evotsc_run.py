@@ -89,20 +89,6 @@ def print_params(output_dir, seed):
         params_file.write(f'save_full_step: {save_full_step}\n')
 
 
-def save_indiv(output_dir, indiv, gen):
-    # Note: this evaluates the individual
-    evotsc_plot.plot_expr_AB(indiv=indiv,
-                             sigma_A=sigma_A,
-                             sigma_B=sigma_B,
-                             plot_title=f'best generation {gen:06}',
-                             plot_name=f'{output_dir}/plot_best_gen_{gen:06}.png')
-
-    evotsc_plot.explain(indiv, sigma_A, sigma_B)
-
-    with open(f'{output_dir}/best_gen_{gen:06}.evotsc', 'wb') as save_file:
-        pickle.dump(indiv, save_file)
-
-
 def save_pop(output_dir, pop, gen):
     # At this stage, we have a new non-evaluated population, so let's
     # evaluate everyone to have consistent save files
