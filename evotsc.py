@@ -237,13 +237,15 @@ class Individual:
 
         # Initial values at t = 0
         temporal_expr[:, 0] = np.array([gene.basal_expression for gene in self.genes])
+        delta_expr = np.zeros(len(self.genes))
 
         # Iterate the system
         for t in range(1, total_steps):
-            sigma_local = self.inter_matrix @ temporal_expr[:, t-1]
+            sigma_local = self.inter_matrix @ delta_expr
             sigma_total = self.sigma_basal + sigma_local + sigma_env
             delta_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
-            temporal_expr[:, t] = h * delta_expr + (1 - h * self.delta) * temporal_expr[:, t-1]
+            dilution = self.delta * temporal_expr[:, t-1]
+            temporal_expr[:, t] = temporal_expr[:, t-1] + h * (delta_expr - dilution)
 
         final_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
 
