@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize
 from typing import List, Tuple
 
 # Class that holds all the mutation parameters
@@ -84,7 +85,6 @@ class Individual:
                  genes: List[Gene],
                  interaction_dist: float,
                  interaction_coef: float,
-                 nb_eval_steps: int,
                  sigma_basal: float,
                  sigma_opt: float,
                  epsilon: float,
@@ -100,7 +100,6 @@ class Individual:
         self.epsilon = epsilon
         self.delta = delta
         self.substeps = substeps
-        self.nb_eval_steps = nb_eval_steps
 
         if rng:
             self.rng = rng
@@ -123,7 +122,6 @@ class Individual:
         new_indiv = Individual(new_genes,
                                self.interaction_dist,
                                self.interaction_coef,
-                               self.nb_eval_steps,
                                self.sigma_basal,
                                self.sigma_opt,
                                self.epsilon,
@@ -229,35 +227,35 @@ class Individual:
 
     def run_system(self, sigma_env: float) -> np.ndarray:
 
-        h = 1 / self.substeps # the Euler time step
+        iter_expr = []
 
-        total_steps = self.substeps * self.nb_eval_steps
+        def append(x, f):
+            nonlocal iter_expr
+            iter_expr.append(x)
 
-        temporal_expr = np.zeros((self.nb_genes, total_steps))
-
-        # Initial values at t = 0
-        temporal_expr[:, 0] = np.array([gene.basal_expression for gene in self.genes])
-        delta_expr = np.zeros(len(self.genes))
-
-        # Iterate the system
-        for t in range(1, total_steps):
-            sigma_local = self.inter_matrix @ delta_expr
+        # We want a fixed point for the expression levels; in order to compute
+        # that, we compute a zero of the function g(expr) = f(expr) - expr,
+        # where f is the function that gives the relationship between the gene
+        # expression levels.
+        def expr_t(expr):
+            sigma_local = self.inter_matrix @ expr
             sigma_total = self.sigma_basal + sigma_local + sigma_env
-            delta_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
-            dilution = self.delta * temporal_expr[:, t-1]
-            temporal_expr[:, t] = temporal_expr[:, t-1] + h * (delta_expr - dilution)
+            new_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
+            return new_expr - expr
 
-        final_expr = np.zeros((self.nb_genes, self.nb_eval_steps))
+        # Initial values
+        expr0 = np.array([gene.basal_expression for gene in self.genes])
 
-        for step in range(self.nb_eval_steps):
-            final_expr[:, step] = temporal_expr[:, self.substeps * step]
+        # Experimentally determined that 'linearmixing' works best.
+        res = scipy.optimize.root(expr_t, expr0, method='linearmixing', callback=append)
 
-        return final_expr
+        iter_expr = np.array(iter_expr).T
+
+        return iter_expr
+
 
     def compute_fitness(self) -> float:
-        # On renvoie la moyenne de (valeur d'expression - target)
-        # sur les 5 derniers pas de temps et sur les gènes
-        target_steps = 5
+        # Return the average of (expression level - target) on the last iteration
         selection_coef = 50
 
         expr_levels_A, expr_levels_B = self.expr_levels
@@ -266,15 +264,15 @@ class Individual:
         for i_gene in range(self.nb_genes):
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 1:
                 target_A[i_gene] = 1.0
-        full_target_A = np.repeat([target_A], repeats=target_steps, axis=0).transpose()
-        delta_A = np.sum(np.square(expr_levels_A[:, self.nb_eval_steps-target_steps:] - full_target_A)) / (target_steps * self.nb_genes)
+
+        delta_A = np.sum(np.square(expr_levels_A[:, -1] - target_A)) / self.nb_genes
 
         target_B = np.zeros(self.nb_genes)
         for i_gene in range(self.nb_genes):
             if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 2:
                 target_B[i_gene] = 1.0
-        full_target_B = np.repeat([target_B], repeats=target_steps, axis=0).transpose()
-        delta_B = np.sum(np.square(expr_levels_B[:, self.nb_eval_steps-target_steps:] - full_target_B)) / (target_steps * self.nb_genes)
+
+        delta_B = np.sum(np.square(expr_levels_B[:, -1] - target_B)) / self.nb_genes
 
         fitness = np.exp(- selection_coef * (delta_A + delta_B))
 
@@ -467,14 +465,13 @@ class Individual:
                   sigma_B: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         (temporal_expr_A, temporal_expr_B), fitness = self.evaluate(sigma_A, sigma_B)
 
-        target_steps = 5
 
         ### Environment A
         on_genes_A = np.zeros(3, dtype=int)
         off_genes_A = np.zeros(3, dtype=int)
-        avg_expr_A = np.sum(temporal_expr_A[:, self.nb_eval_steps-target_steps:], axis=1) / target_steps
+        final_expr_A = temporal_expr_A[:, -1]
         for i_gene, gene in enumerate(self.genes):
-            if avg_expr_A[i_gene] > 0.5:
+            if final_expr_A[i_gene] > 0.5:
                 on_genes_A[gene.gene_type] += 1
             else:
                 off_genes_A[gene.gene_type] += 1
@@ -482,9 +479,9 @@ class Individual:
         ### Environment B
         on_genes_B = np.zeros(3, dtype=int)
         off_genes_B = np.zeros(3, dtype=int)
-        avg_expr_B = np.sum(temporal_expr_B[:, self.nb_eval_steps-target_steps:], axis=1) / target_steps
+        final_expr_B = temporal_expr_B[:, -1]
         for i_gene, gene in enumerate(self.genes):
-            if avg_expr_B[i_gene] > 0.5:
+            if final_expr_B[i_gene] > 0.5:
                 on_genes_B[gene.gene_type] += 1
             else:
                 off_genes_B[gene.gene_type] += 1

@@ -103,7 +103,6 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
 def explain(indiv, sigma_A, sigma_B):
     (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate(sigma_A, sigma_B)
-    nb_eval_steps = indiv.nb_eval_steps
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
 
     print(f'Fitness: {fitness:.5}')
