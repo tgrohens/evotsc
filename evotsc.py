@@ -488,6 +488,79 @@ class Individual:
 
         return on_genes_A, off_genes_A, on_genes_B, off_genes_B
 
+    # Compute the final supercoiling level at positions `positions`
+    # under external supercoiling `sigma`
+    def compute_final_sc_at(self,
+                            sigma: float,
+                            positions: np.ndarray) -> np.ndarray:
+        gene_positions, genome_size = self.compute_gene_positions()
+
+        nb_pos = len(positions)
+        sc_tsc = np.zeros(nb_pos)
+
+        # Run the individual
+        if not self.already_evaluated:
+            self.evaluate(sigma, sigma)
+
+        temporal_expr = self.run_system(sigma)
+        gene_expr = temporal_expr[:, -1]
+
+        for i_pos, x in enumerate(positions):
+
+            pos_tsc = 0.0
+
+            for i_gene, gene in enumerate(self.genes):
+
+                # We compute the influence of gene i at position x
+
+                pos_1_minus_x = gene_positions[i_gene] - x
+                pos_x_minus_1 = - pos_1_minus_x
+
+                ## On veut savoir si le gène 1 est avant la position x ou après
+                # Avant : -------1--x-------- ou -x---------------1-
+                # Après : -------x--1-------- ou -1---------------x-
+
+                if pos_1_minus_x < 0: # -------1--2-------- ou -1---------------2-
+                    if pos_x_minus_1 < genome_size + pos_1_minus_x: # -------1--2--------
+                        distance = pos_x_minus_1
+                        i_before_x = True
+                    else: # -1---------------2-
+                        distance = genome_size + pos_1_minus_x
+                        i_before_x = False
+
+                else: # -------2--1-------- ou -2---------------1-
+                    if pos_1_minus_x < genome_size + pos_x_minus_1: # -------2--1--------
+                        distance = pos_1_minus_x
+                        i_before_x = False
+                    else:
+                        distance = genome_size + pos_x_minus_1
+                        i_before_x = True
+
+                # Exit early if genes are too far
+                if distance > self.interaction_dist:
+                    continue
+
+                if i_before_x:
+                    if gene.orientation == 1: # i lagging : +
+                        sign_1_on_x = +1
+                    else:
+                        sign_1_on_x = -1
+                else:
+                    if gene.orientation == 0: # i leading : +
+                        sign_1_on_x = +1
+                    else:
+                        sign_1_on_x = -1
+
+                # Here, we know that distance <= self.interaction_dist
+                strength = 1.0 - distance/self.interaction_dist
+
+                # Supercoiling variations are additive
+                pos_tsc += sign_1_on_x * strength * gene_expr[i_gene]
+
+            sc_tsc[i_pos] = pos_tsc
+
+        return sc_tsc
+
 
 class Population:
     def __init__(self,

@@ -120,33 +120,29 @@ def explain(indiv, sigma_A, sigma_B):
     print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
 
 
-def plot_genome(indiv, print_ids=False, name=None):
+def plot_genome_and_tsc(indiv, sigma, print_ids=False, name=None):
 
     # Compute gene positions
-    gene_pos = np.zeros(len(indiv.genes), dtype=int)
-    cur_pos = 0
-
-    for i_gene, gene in enumerate(indiv.genes):
-        gene_pos[i_gene] = cur_pos
-        cur_pos += gene.intergene
-        #print(f'Position gène {i_gene}: {cur_pos}')
-    genome_length = cur_pos
+    gene_pos, genome_length = indiv.compute_gene_positions()
 
     # Plot
-    fig, ax = plt.subplots(figsize=(9,9), dpi=dpi)
+    pos_rect = [0, 0, 1, 1]
+    fig = plt.figure(figsize=(9,9), dpi=dpi)
+    ax = fig.add_axes(pos_rect)
 
     rect_width = 0.04
     rect_height = 0.1
 
-    ax.set_xlim(-1.5, 1.5)
-    ax.set_ylim(-1.5, 1.5)
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-1.2, 1.2)
     circle = plt.Circle(xy=(0, 0), radius=1, linestyle='-', fill=False)
     ax.add_patch(circle)
     ax.set_axis_off()
 
+    ## Plot the genes themselves
 
-    colors = ['tab:blue', 'tab:red', 'tab:green'] # AB: blue, A: red, B: green
-    labels = ['AB', 'A', 'B']
+    gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+    gene_types = ['AB', 'A', 'B']
 
     for i_gene, gene in enumerate(indiv.genes):
         pos_angle = 360 * gene_pos[i_gene] / genome_length
@@ -170,7 +166,7 @@ def plot_genome(indiv, print_ids=False, name=None):
                              width=final_width,
                              height=rect_height,
                              angle=orient_angle, #in degrees anti-clockwise about xy.
-                             facecolor=colors[gene.gene_type],
+                             facecolor=gene_type_color[gene.gene_type],
                              edgecolor='black',
                              label=f'Gene {i_gene}')
 
@@ -182,7 +178,7 @@ def plot_genome(indiv, print_ids=False, name=None):
         x_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.sin(pos_rad)
         y_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.cos(pos_rad)
 
-        plt.plot(x_lin, y_lin, color='black', linewidth=1)
+        ax.plot(x_lin, y_lin, color='black', linewidth=1)
 
         # Arrow
         dx_arr = rect_width * np.cos(pos_rad) / 3.0
@@ -191,25 +187,57 @@ def plot_genome(indiv, print_ids=False, name=None):
         if gene.orientation == 1: # Reverse
             dx_arr, dy_arr = -dx_arr, -dy_arr
 
-        plt.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
+        ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
         ## Print gene ID
-        if print_ids:
-            plt.text(x=0.92*x0, y=0.92*y0, s=f'{gene.id}', rotation=orient_angle, ha='left', va='bottom',
-                     rotation_mode='anchor', fontweight='bold')
+        if print_ids and (i_gene % 5 == 0):
+            ha = 'left'
+            if gene.orientation == 1:
+                ha = 'right'
+            ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}',
+                    rotation=orient_angle, ha=ha, va='bottom', rotation_mode='anchor',
+                    fontsize=15)
 
+    ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
+    sc_ax = fig.add_axes(pos_rect, projection='polar', frameon=False)
+    sc_ax.set_ylim(0, 1)
 
-    ## Legend
+    n = 1000  # the number of data points
+
+    # theta values (see
+    # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
+    # To have the crisp version: put n+1 in theta and [data] as the 3rd argument of pcolormesh()
+    # To have the blurry version: put n in theta and [data, data] ----------------------------
+    theta = np.linspace(0, 2 * np.pi, n)
+    radius = np.linspace(.6, .72, 2)
+
+    #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
+    positions = np.linspace(0, genome_length, n, dtype=int)
+    data = indiv.compute_final_sc_at(sigma, positions)
+
+    norm = mpl.colors.Normalize(-2.0, 2.0) # Extremum values for the SC level
+
+    data = -data # Reverse data to get blue = positive and red = negative SC
+    sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
+                     norm=norm, cmap=plt.get_cmap('seismic'))
+    sc_ax.set_yticklabels([])
+    sc_ax.set_xticklabels([])
+    #sc_ax.spines['polar'].set_visible(False)
+    sc_ax.set_theta_zero_location('N')
+    sc_ax.set_theta_direction('clockwise')
+
+    ## Plot the legend
     patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
-               for color, label in zip(colors, labels)]
-    plt.legend(handles=patches, title='Gene type', loc='center')
+               for color, label in zip(gene_type_color, gene_types)]
+    ax.legend(handles=patches, title='Gene type', loc='center',
+              fontsize=15, title_fontsize=15)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
     line_y = -0.3
-    plt.plot([-line_len, line_len], [line_y, line_y],
+    ax.plot([-line_len, line_len], [line_y, line_y],
              color='black',
              linewidth=1)
-    plt.text(0, line_y - 0.07, 'Gene interaction distance', ha='center')
+    ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=15)
 
     if name:
         plt.savefig(name, dpi=300, bbox_inches='tight')
