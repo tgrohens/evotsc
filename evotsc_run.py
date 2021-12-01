@@ -25,7 +25,6 @@ epsilon = 0.03
 delta = 1.0
 substeps = 5
 default_basal_expression = 0.5
-nb_eval_steps = 51
 
 # Environment
 sigma_A = 0.1
@@ -74,7 +73,6 @@ def print_params(output_dir, seed):
         params_file.write(f'delta: {delta}\n')
         params_file.write(f'substeps: {substeps}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
-        params_file.write(f'nb_eval_steps: {nb_eval_steps}\n')
         # Environment
         params_file.write(f'sigma_A: {sigma_A}\n')
         params_file.write(f'sigma_B: {sigma_B}\n')
@@ -160,7 +158,6 @@ def main():
         init_indiv = evotsc.Individual(genes=init_genes,
                                        interaction_dist=interaction_dist,
                                        interaction_coef=interaction_coef,
-                                       nb_eval_steps=nb_eval_steps,
                                        sigma_basal=sigma_basal,
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
