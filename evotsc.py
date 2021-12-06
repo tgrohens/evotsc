@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.optimize
 from typing import List, Tuple
 
 # Class that holds all the mutation parameters
@@ -219,33 +218,45 @@ class Individual:
         return inter_matrix
 
 
+    # Fixpoint solver with a simple step by step iteration
     def run_system(self, sigma_env: float) -> np.ndarray:
 
-        iter_expr = []
+        step_size = 0.5
+        stop_dist = 1e-7
+        max_eval_steps = 1000
 
-        def append(x, f):
-            nonlocal iter_expr
-            iter_expr.append(x)
+        # Initial values at t = 0
+        prev_expr = np.array([gene.basal_expression for gene in self.genes])
+        temporal_expr = [prev_expr]
 
-        # We want a fixed point for the expression levels; in order to compute
-        # that, we compute a zero of the function g(expr) = f(expr) - expr,
-        # where f is the function that gives the relationship between the gene
-        # expression levels.
-        def expr_t(expr):
-            sigma_local = self.inter_matrix @ expr
+        # Iterate the system
+        it = 0
+        cont = True
+        while cont:
+            sigma_local = self.inter_matrix @ prev_expr
             sigma_total = self.sigma_basal + sigma_local + sigma_env
-            new_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
-            return new_expr - expr
 
-        # Initial values
-        expr0 = np.array([gene.basal_expression for gene in self.genes])
+            iter_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
 
-        # Experimentally determined that 'linearmixing' works best.
-        res = scipy.optimize.root(expr_t, expr0, method='linearmixing', callback=append)
+            nouv_expr = step_size * iter_expr + (1 - step_size) * prev_expr
 
-        iter_expr = np.array(iter_expr).T
+            temporal_expr.append(nouv_expr)
 
-        return iter_expr
+            # Check if we're done
+            dist = np.sum(np.abs(nouv_expr - prev_expr)) / self.nb_genes
+
+            prev_expr = nouv_expr
+
+            if dist < stop_dist:
+                cont = False
+
+            it += 1
+            if it == max_eval_steps:
+                cont = False
+
+        temporal_expr = np.array(temporal_expr).T
+
+        return temporal_expr
 
 
     def compute_fitness(self) -> float:
