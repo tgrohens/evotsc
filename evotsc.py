@@ -88,8 +88,6 @@ class Individual:
                  sigma_basal: float,
                  sigma_opt: float,
                  epsilon: float,
-                 delta: float,
-                 substeps: int,
                  rng: np.random.Generator = None) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
@@ -98,8 +96,6 @@ class Individual:
         self.sigma_basal = sigma_basal
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
-        self.delta = delta
-        self.substeps = substeps
 
         if rng:
             self.rng = rng
@@ -125,8 +121,6 @@ class Individual:
                                self.sigma_basal,
                                self.sigma_opt,
                                self.epsilon,
-                               self.delta,
-                               self.substeps,
                                self.rng)
 
         new_indiv.already_evaluated = self.already_evaluated
