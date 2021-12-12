@@ -140,6 +140,7 @@ def plot_genome(indiv, print_ids=False, name=None):
     ax.set_axis_off()
 
     gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+    gene_types = ['AB', 'A', 'B']
 
     ## Plot the genes themselves
     for i_gene, gene in enumerate(indiv.genes):
@@ -197,7 +198,8 @@ def plot_genome(indiv, print_ids=False, name=None):
     ## Plot the legend
     patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
                for color, label in zip(gene_type_color, gene_types)]
-    ax.legend(handles=patches, title='Gene type', loc='center')
+    ax.legend(handles=patches, title='Gene type', loc='center',
+              title_fontsize=15, fontsize=15)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
     line_y = -0.3
@@ -241,6 +243,7 @@ def plot_genome_and_tsc(indiv,
     ## Plot the genes themselves
 
     gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+    gene_types = ['AB', 'A', 'B']
 
     for i_gene, gene in enumerate(indiv.genes):
         pos_angle = 360 * gene_pos[i_gene] / genome_length
@@ -331,7 +334,12 @@ def plot_genome_and_tsc(indiv,
         cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=15)
 
-    ## Legend: the gene interaction distance
+    ## Legend: gene types and interaction distance
+    patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
+               for color, label in zip(gene_type_color, gene_types)]
+    ax.legend(handles=patches, title='Gene type', loc='center',
+              title_fontsize=15, fontsize=15)
+
     line_len = np.pi*indiv.interaction_dist/genome_length
     line_y = -0.3
     ax.plot([-line_len, line_len], [line_y, line_y],
