@@ -8,7 +8,6 @@ import subprocess
 import numpy as np
 
 import evotsc
-import evotsc_plot
 
 ## Constants
 # Population
@@ -16,8 +15,9 @@ nb_indivs = 100
 nb_genes = 60
 
 # Genome
-intergene = 1000
-interaction_dist = 2500
+intergene = 2000
+gene_length = 1000
+interaction_dist = 10_000
 interaction_coef = 0.3
 sigma_basal = -0.06
 sigma_opt = -0.06
@@ -36,8 +36,7 @@ basal_sc_mutation_prob = 0.0 #1e-1
 basal_sc_mutation_var = 0.0 #1e-4
 
 # Logging
-save_best_step = 2000
-save_full_step = 10000
+save_full_step = 10_000
 
 
 def get_git_hash():
@@ -63,6 +62,7 @@ def print_params(output_dir, seed):
         params_file.write(f'nb_genes: {nb_genes}\n')
         # Genome
         params_file.write(f'intergene: {intergene}\n')
+        params_file.write(f'gene_length: {gene_length}\n')
         params_file.write(f'interaction_dist: {interaction_dist}\n')
         params_file.write(f'interaction_coef: {interaction_coef}\n')
         params_file.write(f'sigma_basal: {sigma_basal}\n')
@@ -79,7 +79,6 @@ def print_params(output_dir, seed):
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
         # Logging
-        params_file.write(f'save_best_step: {save_best_step}\n')
         params_file.write(f'save_full_step: {save_full_step}\n')
 
 
@@ -98,7 +97,7 @@ def load_pop(pop_path):
 
 def write_stats(stats_file, indiv, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
-    _, genome_size = indiv.compute_gene_positions()
+    _, genome_size = indiv.compute_gene_positions(include_coding=True)
     stats_file.write(f'{gen},{indiv.fitness},{genome_size},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
                     f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]},'
@@ -146,6 +145,7 @@ def main():
 
         # Setup the initial individual and population
         init_genes = evotsc.Gene.generate(intergene=intergene,
+                                          length=gene_length,
                                           nb_genes=nb_genes,
                                           default_basal_expression=default_basal_expression,
                                           rng=rng)

@@ -1,3 +1,4 @@
+import enum
 import numpy as np
 from typing import List, Tuple
 
@@ -15,30 +16,39 @@ class Mutation:
         self.basal_sc_mutation_var = basal_sc_mutation_var
         self.inversion_poisson_lam = inversion_poisson_lam
 
+
+class Orient(enum.IntEnum):
+    LEADING = 0
+    LAGGING = 1
+
 class Gene:
     def __init__(self,
                  intergene: int,
-                 orientation: int,
+                 orientation: Orient,
+                 length: int,
                  basal_expression: float,
                  gene_type: int,
                  id: int) -> None:
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
+        self.length = length                      # Length of the gene
         self.basal_expression = basal_expression  # Initial expression level
         self.gene_type = gene_type                # Should the gene be active in env. A, B, or both
         self.id = id                              # Track genes through inversions
 
     def __repr__(self) -> str:
-        return (f'ID: {self.id}, '
+        return (f'ID: {self.id:02}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
-                f'type: {["A & B", "A", "B"][self.gene_type]}, '
+                f'length: {self.length}, '
+                f'type: {["AB", " A", " B"][self.gene_type]}, '
                 f'expr: {self.basal_expression:.3}')
 
     # Generate a list of random genes
     @classmethod
     def generate(cls,
                  intergene: int,
+                 length: int,
                  nb_genes: int,
                  default_basal_expression: float = None,
                  rng: np.random.Generator = None) -> 'Gene':
@@ -62,7 +72,8 @@ class Gene:
             else:
                 basal_expression = default_basal_expression
             new_gene = cls(intergene=intergene,
-                           orientation=rng.integers(2),
+                           orientation=Orient(rng.integers(2)),
+                           length=length,
                            basal_expression=basal_expression,
                            gene_type=gene_types[i_gene],
                            id=i_gene)
@@ -74,6 +85,7 @@ class Gene:
     def clone(self) -> 'Gene':
         return Gene(intergene=self.intergene,
                     orientation=self.orientation,
+                    length=self.length,
                     basal_expression=self.basal_expression,
                     gene_type=self.gene_type,
                     id=self.id)
@@ -105,7 +117,7 @@ class Individual:
 
 
     def __repr__(self) -> str:
-        gene_pos, total_len = self.compute_gene_positions()
+        gene_pos, total_len = self.compute_gene_positions(include_coding=True)
         repr_str = f'length: {total_len}\n'
         for i_gene, gene in enumerate(self.genes):
             repr_str += f'Gene {i_gene}: pos {gene_pos[i_gene]}, {gene}\n'
@@ -134,20 +146,35 @@ class Individual:
 
     ############ Individual evaluation
 
-    def compute_gene_positions(self) -> Tuple[int, np.ndarray]:
+    def compute_gene_positions(self,
+                               include_coding: bool) -> Tuple[np.ndarray, int]:
+
+        # include_coding = True is used when displaying genes, and when
+        # computing gene interaction distances to compute the SC level.
+        # include_coding = False is used in inversion-related code, as it makes
+        # it simpler to handle mutations (inversions never fall inside a gene).
 
         positions = np.zeros(self.nb_genes, dtype=int)
         cur_pos = 0
 
         for i_gene, gene in enumerate(self.genes):
             positions[i_gene] = cur_pos
+
+            if include_coding:
+                # If the gene is lagging, add the gene length minus one to
+                # the start position to get the promoter position
+                if gene.orientation == Orient.LAGGING:
+                    positions[i_gene] += gene.length - 1
+
+                cur_pos += gene.length
+
             cur_pos += gene.intergene
 
         return positions, cur_pos
 
 
     def compute_inter_matrix(self) -> np.ndarray:
-        gene_positions, genome_size = self.compute_gene_positions()
+        gene_positions, genome_size = self.compute_gene_positions(include_coding=True)
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
         for i in range(self.nb_genes):
@@ -189,20 +216,20 @@ class Individual:
                     continue
 
                 if i_before_j:
-                    if self.genes[j].orientation == 0: # j leading: +
+                    if self.genes[j].orientation == Orient.LEADING: # j leading: +
                         sign_2_on_1 = +1
                     else:
                         sign_2_on_1 = -1
-                    if self.genes[i].orientation == 1: # i lagging : +
+                    if self.genes[i].orientation == Orient.LAGGING: # i lagging : +
                         sign_1_on_2 = +1
                     else:
                         sign_1_on_2 = -1
                 else:
-                    if self.genes[j].orientation == 1: # j lagging : +
+                    if self.genes[j].orientation == Orient.LAGGING: # j lagging : +
                         sign_2_on_1 = +1
                     else:
                         sign_2_on_1 = -1
-                    if self.genes[i].orientation == 0: # i leading : +
+                    if self.genes[i].orientation == Orient.LEADING: # i leading : +
                         sign_1_on_2 = +1
                     else:
                         sign_1_on_2 = -1
@@ -368,10 +395,12 @@ class Individual:
         nb_inversions = self.rng.poisson(mutation.inversion_poisson_lam)
 
         for inv in range(nb_inversions):
-            gene_positions, genome_size = self.compute_gene_positions()
+            # Here, we are only looking at intergenic distances, and do not care
+            # about gene lengths, so we only count non-coding bases.
+            _, noncoding_size = self.compute_gene_positions(include_coding=False)
 
-            start_pos = self.rng.integers(0, genome_size)
-            end_pos = self.rng.integers(0, genome_size)
+            start_pos = self.rng.integers(0, noncoding_size)
+            end_pos = self.rng.integers(0, noncoding_size)
 
             # Inverting between start and end or between end and start is equivalent
             if end_pos < start_pos:
@@ -384,7 +413,7 @@ class Individual:
 
 
     def perform_inversion(self, start_pos: int, end_pos: int) -> bool:
-        gene_positions, total_length = self.compute_gene_positions()
+        gene_positions, _ = self.compute_gene_positions(include_coding=False)
 
         # Dernier gène avant l'inversion
         cur_pos = 0
@@ -448,7 +477,7 @@ class Individual:
                 inverted_gene.intergene = b + d # l'intergène du dernier gène post-inversion est b + d
 
             # Switch orientations
-            inverted_gene.orientation = 1 - inverted_gene.orientation
+            inverted_gene.orientation = Orient(1 - inverted_gene.orientation)
 
             new_genes.append(inverted_gene)
 
@@ -498,7 +527,8 @@ class Individual:
     def compute_final_sc_at(self,
                             sigma: float,
                             positions: np.ndarray) -> np.ndarray:
-        gene_positions, genome_size = self.compute_gene_positions()
+
+        gene_positions, genome_size = self.compute_gene_positions(include_coding=True)
 
         nb_pos = len(positions)
         sc_tsc = np.zeros(nb_pos)
@@ -546,12 +576,12 @@ class Individual:
                     continue
 
                 if i_before_x:
-                    if gene.orientation == 1: # i lagging : +
+                    if gene.orientation == Orient.LAGGING: # i lagging : +
                         sign_1_on_x = +1
                     else:
                         sign_1_on_x = -1
                 else:
-                    if gene.orientation == 0: # i leading : +
+                    if gene.orientation == Orient.LEADING: # i leading : +
                         sign_1_on_x = +1
                     else:
                         sign_1_on_x = -1

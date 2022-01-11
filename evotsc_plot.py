@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+import evotsc
+
 label_fontsize=20
 tick_fontsize=15
 legend_fontsize=15
@@ -21,7 +23,7 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
     plt.ylim(-0.05, 1.05)
 
     for gene in range(nb_genes):
-        linestyle = 'solid' if indiv.genes[gene].orientation == 0 else 'dashed'
+        linestyle = ['solid', 'dashed'][indiv.genes[gene].orientation]
         plt.plot(temporal_expr[indiv.genes[gene].id, :],
                  linestyle=linestyle,
                  color=colors[indiv.genes[gene].id],
@@ -52,7 +54,7 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.ylim(-0.05, 1.05)
 
     for i_gene, gene in enumerate(indiv.genes):
-        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        linestyle = ['solid', 'dashed'][gene.orientation]
         plt.plot(temporal_expr_A[i_gene, :],
                  linestyle=linestyle,
                  linewidth=2,
@@ -74,7 +76,7 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.ylim(-0.05, 1.05)
 
     for i_gene, gene in enumerate(indiv.genes):
-        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        linestyle = ['solid', 'dashed'][gene.orientation]
         plt.plot(temporal_expr_B[i_gene, :],
                  linestyle=linestyle,
                  linewidth=2,
@@ -97,6 +99,8 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.tight_layout()
 
     plt.savefig(plot_name, dpi=dpi, bbox_inches='tight')
+
+    plt.show()
 
     plt.close()
 
@@ -123,15 +127,12 @@ def explain(indiv, sigma_A, sigma_B):
 def plot_genome(indiv, print_ids=False, name=None):
 
     # Compute gene positions
-    gene_pos, genome_length = indiv.compute_gene_positions()
+    gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
 
     # Plot
     pos_rect = [0.1, 0.1, 0.8, 0.8]
     fig = plt.figure(figsize=(9,9), dpi=dpi)
     ax = fig.add_axes(pos_rect)
-
-    rect_width = 0.04
-    rect_height = 0.1
 
     ax.set_xlim(-1.5, 1.5)
     ax.set_ylim(-1.5, 1.5)
@@ -144,24 +145,26 @@ def plot_genome(indiv, print_ids=False, name=None):
 
     ## Plot the genes themselves
     for i_gene, gene in enumerate(indiv.genes):
-        pos_angle = 360 * gene_pos[i_gene] / genome_length
-        orient_angle = 360 - pos_angle
-        pos_rad = np.radians(pos_angle)
+        ## Compute the angles of the boundaries of the gene
+        start_pos_deg = 360 * gene_pos[i_gene] / genome_length
+        if gene.orientation == evotsc.Orient.LEADING:
+            end_pos_deg = 360 * (gene_pos[i_gene] + gene.length - 1) / genome_length
+        else:
+            end_pos_deg = 360 * (gene_pos[i_gene] - (gene.length - 1)) / genome_length
+        orient_angle = 360 - (start_pos_deg + end_pos_deg) / 2
+        start_pos_rad = np.radians(start_pos_deg)
+        end_pos_rad = np.radians(end_pos_deg)
+        mid_pos_rad = (start_pos_rad + end_pos_rad) / 2
 
         ## Plot the gene rectangle
+        rect_width = 2 * np.sin((end_pos_rad - start_pos_rad) / 2.0)
+        rect_height = 0.1
 
-        x0 = (1.0 - rect_height / 2.0) * np.sin(pos_rad)
-        y0 = (1.0 - rect_height / 2.0) * np.cos(pos_rad)
-
-
-        if gene.orientation == 0:
-            final_width = rect_width
-        else:
-            final_width = -rect_width
-
+        x0 = np.sin(start_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
+        y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
 
         rect = plt.Rectangle(xy=(x0, y0),
-                             width=final_width,
+                             width=rect_width,
                              height=rect_height,
                              angle=orient_angle, #in degrees anti-clockwise about xy.
                              facecolor=gene_type_color[gene.gene_type],
@@ -173,24 +176,21 @@ def plot_genome(indiv, print_ids=False, name=None):
         ## Plot the orientation bar and arrow
 
         # Bar
-        x_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.sin(pos_rad)
-        y_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.cos(pos_rad)
+        x_lin = np.sin(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.sin(mid_pos_rad)
+        y_lin = np.cos(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.cos(mid_pos_rad)
 
         ax.plot(x_lin, y_lin, color='black', linewidth=1)
 
         # Arrow
-        dx_arr = rect_width * np.cos(pos_rad) / 3.0
-        dy_arr = - rect_width * np.sin(pos_rad) / 3.0
-
-        if gene.orientation == 1: # Reverse
-            dx_arr, dy_arr = -dx_arr, -dy_arr
+        dx_arr = rect_width * np.cos(mid_pos_rad) / 3.0
+        dy_arr = - rect_width * np.sin(mid_pos_rad) / 3.0
 
         ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
         ## Print gene ID
         if print_ids and (i_gene % 5 == 0):
             ha = 'left'
-            if gene.orientation == 1:
+            if gene.orientation == evotsc.Orient.LAGGING:
                 ha = 'right'
             ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}', rotation=orient_angle, ha=ha, va='bottom',
                      rotation_mode='anchor')
@@ -223,15 +223,12 @@ def plot_genome_and_tsc(indiv,
                         name=None):
 
     # Compute gene positions
-    gene_pos, genome_length = indiv.compute_gene_positions()
+    gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
 
     # Plot
     pos_rect = [0, 0, 1, 1]
     fig = plt.figure(figsize=(9,9), dpi=dpi)
     ax = fig.add_axes(pos_rect)
-
-    rect_width = 0.04
-    rect_height = 0.1
 
     ax.set_xlim(-1.2, 1.2)
     ax.set_ylim(-1.2, 1.2)
@@ -246,24 +243,26 @@ def plot_genome_and_tsc(indiv,
     gene_types = ['AB', 'A', 'B']
 
     for i_gene, gene in enumerate(indiv.genes):
-        pos_angle = 360 * gene_pos[i_gene] / genome_length
-        orient_angle = 360 - pos_angle
-        pos_rad = np.radians(pos_angle)
+        ## Compute the angles of the boundaries of the gene
+        start_pos_deg = 360 * gene_pos[i_gene] / genome_length
+        if gene.orientation == evotsc.Orient.LEADING:
+            end_pos_deg = 360 * (gene_pos[i_gene] + gene.length - 1) / genome_length
+        else:
+            end_pos_deg = 360 * (gene_pos[i_gene] - (gene.length - 1)) / genome_length
+        orient_angle = 360 - (start_pos_deg + end_pos_deg) / 2
+        start_pos_rad = np.radians(start_pos_deg)
+        end_pos_rad = np.radians(end_pos_deg)
+        mid_pos_rad = (start_pos_rad + end_pos_rad) / 2
 
         ## Plot the gene rectangle
+        rect_width = 2 * np.sin((end_pos_rad - start_pos_rad) / 2.0)
+        rect_height = 0.1
 
-        x0 = (1.0 - rect_height / 2.0) * np.sin(pos_rad)
-        y0 = (1.0 - rect_height / 2.0) * np.cos(pos_rad)
-
-
-        if gene.orientation == 0:
-            final_width = rect_width
-        else:
-            final_width = -rect_width
-
+        x0 = np.sin(start_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
+        y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
 
         rect = plt.Rectangle(xy=(x0, y0),
-                             width=final_width,
+                             width=rect_width,
                              height=rect_height,
                              angle=orient_angle, #in degrees anti-clockwise about xy.
                              facecolor=gene_type_color[gene.gene_type],
@@ -275,24 +274,21 @@ def plot_genome_and_tsc(indiv,
         ## Plot the orientation bar and arrow
 
         # Bar
-        x_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.sin(pos_rad)
-        y_lin = (1.0 + (np.array([0.5, 1.0])) * rect_height) * np.cos(pos_rad)
+        x_lin = np.sin(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.sin(mid_pos_rad)
+        y_lin = np.cos(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.cos(mid_pos_rad)
 
         ax.plot(x_lin, y_lin, color='black', linewidth=1)
 
         # Arrow
-        dx_arr = rect_width * np.cos(pos_rad) / 3.0
-        dy_arr = - rect_width * np.sin(pos_rad) / 3.0
-
-        if gene.orientation == 1: # Reverse
-            dx_arr, dy_arr = -dx_arr, -dy_arr
+        dx_arr = rect_width * np.cos(mid_pos_rad) / 3.0
+        dy_arr = - rect_width * np.sin(mid_pos_rad) / 3.0
 
         ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
         ## Print gene ID
         if print_ids and (i_gene % 5 == 0):
             ha = 'left'
-            if gene.orientation == 1:
+            if gene.orientation == evotsc.Orient.LAGGING:
                 ha = 'right'
             ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}',
                     rotation=orient_angle, ha=ha, va='bottom', rotation_mode='anchor',
