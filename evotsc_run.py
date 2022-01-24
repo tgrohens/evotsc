@@ -17,7 +17,7 @@ nb_genes = 60
 # Genome
 intergene = 2000
 gene_length = 1000
-interaction_dist = 10_000
+interaction_dist = 5000
 interaction_coef = 0.3
 sigma_basal = -0.06
 sigma_opt = -0.06
