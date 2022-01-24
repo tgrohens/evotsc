@@ -15,7 +15,7 @@ nb_indivs = 100
 nb_genes = 60
 
 # Genome
-intergene = 2000
+intergene = 500
 gene_length = 1000
 interaction_dist = 5000
 interaction_coef = 0.3
@@ -52,11 +52,12 @@ def get_git_hash():
     return git_ref
 
 
-def print_params(output_dir, seed):
+def print_params(output_dir, seed, neutral):
     with open(f'{output_dir}/params.txt', 'w') as params_file:
         # Meta
         params_file.write(f'commit: {get_git_hash()}\n')
         params_file.write(f'seed: {seed}\n')
+        params_file.write(f'neutral: {neutral}\n')
         # Population
         params_file.write(f'nb_indivs: {nb_indivs}\n')
         params_file.write(f'nb_genes: {nb_genes}\n')
@@ -141,7 +142,7 @@ def main():
         rng = np.random.default_rng(seed=seed)
 
         # Save the parameters for reproducibility
-        print_params(output_dir, seed)
+        print_params(output_dir, seed, args.neutral)
 
         # Setup the initial individual and population
         init_genes = evotsc.Gene.generate(intergene=intergene,
