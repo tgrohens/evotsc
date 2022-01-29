@@ -183,7 +183,6 @@ class Individual:
                 # We compute the influence of gene 2/j on gene 1/i
 
                 if i == j: # It's the same gene
-                    inter_matrix[i, j] = 0.0
                     continue
 
                 pos_1_minus_2 = gene_positions[i] - gene_positions[j]
@@ -211,8 +210,7 @@ class Individual:
 
                 # Exit early if genes are too far
                 if distance > self.interaction_dist:
-                    inter_matrix[i, j] = 0.0
-                    inter_matrix[j, i] = 0.0
+                    # inter_matrix[i, j] and inter_matrix[j, i] are already 0.0
                     continue
 
                 if i_before_j:
