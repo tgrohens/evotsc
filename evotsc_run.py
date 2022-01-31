@@ -96,13 +96,11 @@ def load_pop(pop_path):
         return pickle.load(save_file)
 
 
-def write_stats(stats_file, indiv, gen):
+def write_stats(stats_file, indiv, avg_fit, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
-    _, genome_size = indiv.compute_gene_positions(include_coding=True)
-    stats_file.write(f'{gen},{indiv.fitness},{genome_size},'
+    stats_file.write(f'{gen},{indiv.fitness},{avg_fit},'
                     f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
-                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]},'
-                    f'{indiv.sigma_basal}\n')
+                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
     stats_file.flush()
 
 
@@ -159,6 +157,8 @@ def main():
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
                                        rng=rng)
+        # Evaluate the initial individual before creating the clonal population
+        init_indiv.evaluate(sigma_A, sigma_B)
 
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
@@ -174,17 +174,13 @@ def main():
                                        sigma_B=sigma_B,
                                        rng=rng)
 
-        # Evaluate the initial population before the first step
-        population.evaluate()
-
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
-            stats_file.write('Gen,Fitness,Genome size,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
-                                        'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B,'
-                                        'basal_sc\n')
+            stats_file.write('Gen,Fitness,Avg Fit,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
+                                        'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B\n')
 
             save_pop(output_dir, population, 0)
-            write_stats(stats_file, init_indiv, 0)
+            write_stats(stats_file, init_indiv, init_indiv.fitness, 0)
 
     else:
         save_files = [f for f in output_dir.iterdir() if 'pop_gen' in f.name]
@@ -214,7 +210,7 @@ def main():
             best_indiv, avg_fit = population.step()
 
             print(f'Gen {gen}: best fit {best_indiv.fitness:.5}, avg fit {avg_fit:.5}')
-            write_stats(stats_file, best_indiv, gen)
+            write_stats(stats_file, best_indiv, avg_fit, gen)
 
             if gen % save_full_step == 0:
                 save_pop(output_dir, population, gen)
