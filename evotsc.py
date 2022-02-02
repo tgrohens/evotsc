@@ -99,6 +99,7 @@ class Individual:
                  sigma_basal: float,
                  sigma_opt: float,
                  epsilon: float,
+                 selection_coef: int,
                  rng: np.random.Generator = None) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
@@ -107,6 +108,7 @@ class Individual:
         self.sigma_basal = sigma_basal
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
+        self.selection_coef = selection_coef
 
         if rng:
             self.rng = rng
@@ -132,6 +134,7 @@ class Individual:
                                self.sigma_basal,
                                self.sigma_opt,
                                self.epsilon,
+                               self.selection_coef,
                                self.rng)
 
         new_indiv.already_evaluated = self.already_evaluated
@@ -286,8 +289,6 @@ class Individual:
 
     def compute_fitness(self) -> float:
         # Return the average of (expression level - target) on the last iteration
-        selection_coef = 50
-
         expr_levels_A, expr_levels_B = self.expr_levels
 
         target_A = np.zeros(self.nb_genes)
@@ -304,7 +305,7 @@ class Individual:
 
         delta_B = np.sum(np.square(expr_levels_B[:, -1] - target_B)) / self.nb_genes
 
-        fitness = np.exp(- selection_coef * (delta_A + delta_B))
+        fitness = np.exp(- self.selection_coef * (delta_A + delta_B))
 
         return fitness
 

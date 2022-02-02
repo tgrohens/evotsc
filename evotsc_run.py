@@ -24,6 +24,9 @@ sigma_opt = -0.06
 epsilon = 0.03
 default_basal_expression = 0.5
 
+# Fitness
+selection_coef = 50
+
 # Environment
 sigma_A = 0.1
 sigma_B = -0.1
@@ -70,6 +73,8 @@ def print_params(output_dir, seed, neutral):
         params_file.write(f'sigma_opt: {sigma_opt}\n')
         params_file.write(f'epsilon: {epsilon}\n')
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
+        # Fitness
+        params_file.write(f'selection_coef: {selection_coef}\n')
         # Environment
         params_file.write(f'sigma_A: {sigma_A}\n')
         params_file.write(f'sigma_B: {sigma_B}\n')
@@ -156,6 +161,7 @@ def main():
                                        sigma_basal=sigma_basal,
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
+                                       selection_coef=selection_coef,
                                        rng=rng)
         # Evaluate the initial individual before creating the clonal population
         init_indiv.evaluate(sigma_A, sigma_B)
