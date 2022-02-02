@@ -532,10 +532,8 @@ class Individual:
         sc_tsc = np.zeros(nb_pos)
 
         # Run the individual
-        if not self.already_evaluated:
-            self.evaluate(sigma, sigma)
-
-        temporal_expr = self.run_system(sigma)
+        self.already_evaluated = False
+        (temporal_expr, _), _ = self.evaluate(sigma, sigma)
         gene_expr = temporal_expr[:, -1]
 
         for i_pos, x in enumerate(positions):
