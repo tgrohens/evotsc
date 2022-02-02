@@ -27,6 +27,9 @@ default_basal_expression = 0.5
 # Fitness
 selection_coef = 50
 
+# Selection
+selection_method = "fit-prop" # Choices: "fit-prop", "rank"
+
 # Environment
 sigma_A = 0.1
 sigma_B = -0.1
@@ -75,6 +78,8 @@ def print_params(output_dir, seed, neutral):
         params_file.write(f'default_basal_expression: {default_basal_expression}\n')
         # Fitness
         params_file.write(f'selection_coef: {selection_coef}\n')
+        # Selection
+        params_file.write(f'selection_method: {selection_method}\n')
         # Environment
         params_file.write(f'sigma_A: {sigma_A}\n')
         params_file.write(f'sigma_B: {sigma_B}\n')
@@ -178,6 +183,7 @@ def main():
                                        mutation=mutation,
                                        sigma_A=sigma_A,
                                        sigma_B=sigma_B,
+                                       selection_method=selection_method,
                                        rng=rng)
 
         if not args.neutral:

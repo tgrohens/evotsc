@@ -601,6 +601,7 @@ class Population:
                  mutation: Mutation,
                  sigma_A: float,
                  sigma_B: float,
+                 selection_method: str,
                  rng: np.random.Generator = None) -> None:
         # Individuals
         self.individuals = []
@@ -609,13 +610,16 @@ class Population:
             indiv = init_indiv.clone()
             self.individuals.append(indiv)
 
-        # Mutation operators
         if rng:
             self.rng = rng
         else:
             self.rng = np.random.default_rng()
 
+        # Mutation operators
         self.mutation = mutation
+
+        # Selection
+        self.selection_method = selection_method
 
         # Environment
         self.sigma_A = sigma_A
@@ -634,13 +638,36 @@ class Population:
         # - create new individuals with mutations
         # - evaluate the new individuals
 
-        # Sélection de l'ancêtre de chaque individu de la nouvelle génération
-        old_fitnesses = np.array([indiv.fitness for indiv in self.individuals])
-        total_fitness = np.sum(old_fitnesses)
+        # Compute the probability of being the ancestor to an individual of the
+        # new population.
+
+        # Probability is directly proportional to fitness
+        if self.selection_method == 'fit-prop':
+            old_fitnesses = np.array([indiv.fitness for indiv in self.individuals])
+            total_fitness = np.sum(old_fitnesses)
+            prob = old_fitnesses/total_fitness
+
+        # Probability is proportional to the rank in the population, sorted by
+        # fitness
+        elif self.selection_method == 'rank':
+            indivs_with_ids = list(zip(self.individuals, range(self.nb_indivs)))
+
+            sorted_indivs = sorted(indivs_with_ids,
+                                   key=lambda x : x[0].fitness, reverse=True)
+
+            ranks = np.zeros(self.nb_indivs, dtype=int)
+            prob = np.zeros(self.nb_indivs)
+            for rank, (_, id) in enumerate(sorted_indivs):
+                ranks[id] = rank
+
+            prob = 2 * (self.nb_indivs - ranks) / (self.nb_indivs * (self.nb_indivs + 1))
+
+        else:
+            raise ValueError('Unknown selection method')
+
         ancestors = self.rng.choice(np.arange(self.nb_indivs),
                                     size=self.nb_indivs,
-                                    p=old_fitnesses/total_fitness)
-
+                                    p=prob)
 
         # Création de la nouvelle génération avec mutation et évaluation
         new_indivs = []
