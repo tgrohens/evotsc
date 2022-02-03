@@ -662,6 +662,22 @@ class Population:
 
             prob = 2 * (self.nb_indivs - ranks) / (self.nb_indivs * (self.nb_indivs + 1))
 
+        # Probability decreases exponentionally with the rank, according to
+        # $c \in [0, 1]$. The ranking gets flatter as $c$ gets closer to 1.
+        elif self.selection_method == 'exp-rank':
+            c = 0.9
+            indivs_with_ids = list(zip(self.individuals, range(self.nb_indivs)))
+
+            sorted_indivs = sorted(indivs_with_ids,
+                                   key=lambda x : x[0].fitness, reverse=True)
+
+            ranks = np.zeros(self.nb_indivs, dtype=int)
+            prob = np.zeros(self.nb_indivs)
+            for rank, (_, id) in enumerate(sorted_indivs):
+                ranks[id] = rank
+
+            prob = (c - 1) / (np.power(c, self.nb_indivs) - 1) * np.power(c, ranks)
+
         else:
             raise ValueError('Unknown selection method')
 
