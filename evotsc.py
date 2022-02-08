@@ -288,24 +288,35 @@ class Individual:
 
 
     def compute_fitness(self) -> float:
-        # Return the average of (expression level - target) on the last iteration
+        # We compute the gap g, which is the distance to the optimal phenotype,
+        # as the sum for each type of gene (A, B, AB) of:
+        # (mean expression of the genes of that type - expected expression) ^ 2
+        # The fitness f is then given by: f = exp(- k g) where k is the
+        # selection coefficient.
+
+        nb_genes_per_type = self.nb_genes / 3
+
         expr_levels_A, expr_levels_B = self.expr_levels
 
-        target_A = np.zeros(self.nb_genes)
-        for i_gene in range(self.nb_genes):
-            if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 1:
-                target_A[i_gene] = 1.0
+        # Environment A
+        gene_expr_A = np.zeros(3)
+        for i_gene, gene in enumerate(self.genes):
+            gene_expr_A[gene.gene_type] += expr_levels_A[i_gene, -1]
 
-        delta_A = np.sum(np.square(expr_levels_A[:, -1] - target_A)) / self.nb_genes
+        target_A = np.array([1.0, 1.0, 0.0]) # Gene types are AB, A, B
 
-        target_B = np.zeros(self.nb_genes)
-        for i_gene in range(self.nb_genes):
-            if self.genes[i_gene].gene_type == 0 or self.genes[i_gene].gene_type == 2:
-                target_B[i_gene] = 1.0
+        gap_A = np.sum(np.square(gene_expr_A / nb_genes_per_type - target_A))
 
-        delta_B = np.sum(np.square(expr_levels_B[:, -1] - target_B)) / self.nb_genes
+        # Environment B
+        gene_expr_B = np.zeros(3)
+        for i_gene, gene in enumerate(self.genes):
+            gene_expr_B[gene.gene_type] += expr_levels_B[i_gene, -1]
 
-        fitness = np.exp(- self.selection_coef * (delta_A + delta_B))
+        target_B = np.array([1.0, 0.0, 1.0]) # Gene types are AB, A, B
+
+        gap_B = np.sum(np.square(gene_expr_B / nb_genes_per_type - target_B))
+
+        fitness = np.exp(- self.selection_coef * (gap_A + gap_B))
 
         return fitness
 
