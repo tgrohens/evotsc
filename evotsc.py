@@ -181,19 +181,28 @@ class Individual:
         inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
 
         for i in range(self.nb_genes):
-            for j in range(i, self.nb_genes):
+            for j in range(self.nb_genes):
 
-                # We compute the influence of gene 2/j on gene 1/i
+                # We compute the influence of gene 2/j on gene 1/i.
 
                 if i == j: # It's the same gene
                     continue
 
-                pos_1_minus_2 = gene_positions[i] - gene_positions[j]
+                # As genes have a non-zero length, the relevant distance is
+                # between the middle of gene j and the promoter of gene i.
+
+                if self.genes[j].orientation == Orient.LEADING:
+                    pos_j = gene_positions[j] + self.genes[j].length // 2
+                else: # self.genes[j].orientation == Orient.LAGGING:
+                    pos_j = gene_positions[j] - self.genes[j].length // 2
+
+
+                pos_1_minus_2 = gene_positions[i] - pos_j
                 pos_2_minus_1 = - pos_1_minus_2
 
-                ## On veut savoir si le gène 1 est avant le gène 2 ou après
-                # Avant : -------1--2-------- ou -2---------------1-
-                # Après : -------2--1-------- ou -1---------------2-
+                # We want to know whether gene 1 comes before or after gene 2
+                # Before: -------1--2-------- or -2---------------1-
+                # After:  -------2--1-------- or -1---------------2-
 
                 if pos_1_minus_2 < 0: # -------1--2-------- ou -1---------------2-
                     if pos_2_minus_1 < genome_size + pos_1_minus_2: # -------1--2--------
@@ -221,25 +230,16 @@ class Individual:
                         sign_2_on_1 = +1
                     else:
                         sign_2_on_1 = -1
-                    if self.genes[i].orientation == Orient.LAGGING: # i lagging : +
-                        sign_1_on_2 = +1
-                    else:
-                        sign_1_on_2 = -1
                 else:
                     if self.genes[j].orientation == Orient.LAGGING: # j lagging : +
                         sign_2_on_1 = +1
                     else:
                         sign_2_on_1 = -1
-                    if self.genes[i].orientation == Orient.LEADING: # i leading : +
-                        sign_1_on_2 = +1
-                    else:
-                        sign_1_on_2 = -1
 
                 # Here, we know that distance <= self.interaction_dist
                 strength = 1.0 - distance/self.interaction_dist
 
                 inter_matrix[i, j] = sign_2_on_1 * strength * self.interaction_coef
-                inter_matrix[j, i] = sign_1_on_2 * strength * self.interaction_coef
 
         inter_matrix = -inter_matrix # Negative sigma -> more transcription
 
