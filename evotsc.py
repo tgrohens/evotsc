@@ -38,9 +38,9 @@ class Gene:
 
     def __repr__(self) -> str:
         return (f'ID: {self.id:02}, '
+                f'length: {self.length}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
-                f'length: {self.length}, '
                 f'type: {["AB", " A", " B"][self.gene_type]}, '
                 f'expr: {self.basal_expression:.3}')
 
