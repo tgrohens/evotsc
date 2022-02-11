@@ -586,7 +586,14 @@ class Individual:
 
                 else:
 
-                    pos_i_minus_x = gene_positions[i_gene] - x
+                    # We use the distance to the middle of the gene to compute
+                    # the interaction level.
+                    if gene.orientation == Orient.LEADING:
+                        pos_i = gene_positions[i_gene] + gene.length // 2
+                    else:
+                        pos_i = gene_positions[i_gene] - gene.length // 2
+
+                    pos_i_minus_x = pos_i - x
                     pos_x_minus_i = - pos_i_minus_x
 
                     # We want to know whether gene 1/x comes before or after gene 2
