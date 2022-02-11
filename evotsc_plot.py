@@ -311,7 +311,12 @@ def plot_genome_and_tsc(indiv,
     positions = np.linspace(0, genome_length, n, dtype=int)
     data = indiv.compute_final_sc_at(sigma, positions)
 
-    norm = mpl.colors.Normalize(-2.0, 2.0) # Extremum values for the SC level
+    min_sc = -1.0
+    max_sc = 1.0
+    norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
+
+    if np.min(data) < min_sc or np.max(data) > max_sc:
+        raise ValueError(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}')
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
                             norm=norm, cmap=plt.get_cmap('seismic'))
