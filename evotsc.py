@@ -556,49 +556,80 @@ class Individual:
 
                 # We compute the influence of gene i at position x
 
-                pos_1_minus_x = gene_positions[i_gene] - x
-                pos_x_minus_1 = - pos_1_minus_x
+                # If x is inside gene i, the computation is slightly different
+                if ((gene.orientation == Orient.LEADING and
+                    x >= gene_positions[i_gene] and
+                    x < gene_positions[i_gene] + gene.length) or
+                   (gene.orientation == Orient.LAGGING and
+                    x >= gene_positions[i_gene] - gene.length + 1 and
+                    x < gene_positions[i_gene] + 1)):
 
-                ## On veut savoir si le gène 1 est avant la position x ou après
-                # Avant : -------1--x-------- ou -x---------------1-
-                # Après : -------x--1-------- ou -1---------------x-
-
-                if pos_1_minus_x < 0: # -------1--2-------- ou -1---------------2-
-                    if pos_x_minus_1 < genome_size + pos_1_minus_x: # -------1--2--------
-                        distance = pos_x_minus_1
-                        i_before_x = True
-                    else: # -1---------------2-
-                        distance = genome_size + pos_1_minus_x
-                        i_before_x = False
-
-                else: # -------2--1-------- ou -2---------------1-
-                    if pos_1_minus_x < genome_size + pos_x_minus_1: # -------2--1--------
-                        distance = pos_1_minus_x
-                        i_before_x = False
+                    if gene.orientation == Orient.LEADING:
+                        pos_inside = (x - gene_positions[i_gene]) / gene.length
                     else:
-                        distance = genome_size + pos_x_minus_1
-                        i_before_x = True
+                        pos_inside = (x - (gene_positions[i_gene] - gene.length + 1)) / gene.length
 
-                # Exit early if genes are too far
-                if distance > self.interaction_dist:
-                    continue
+                    # The negative supercoiling is maximal at the promoter
+                    # (pos_inside = 0), null at half the gene
+                    # (pos_inside = 1/2), and minimal (ie the positive
+                    # supercoiling is maximal) at the other end of the gene
+                    # (pos_inside = 1).
 
-                if i_before_x:
-                    if gene.orientation == Orient.LAGGING: # i lagging : +
-                        sign_1_on_x = +1
-                    else:
-                        sign_1_on_x = -1
+                    delta_sc = ((2 * pos_inside - 1) *
+                                (1 - gene.length / (2 * self.interaction_dist)) *
+                                self.interaction_coef * gene_expr[i_gene])
+
+                    if gene.orientation == Orient.LAGGING:
+                        delta_sc = -delta_sc
+
+                    pos_tsc += delta_sc
+
                 else:
-                    if gene.orientation == Orient.LEADING: # i leading : +
-                        sign_1_on_x = +1
+
+                    pos_i_minus_x = gene_positions[i_gene] - x
+                    pos_x_minus_i = - pos_i_minus_x
+
+                    # We want to know whether gene 1/x comes before or after gene 2
+                    # Before: -------1--2-------- or -2---------------1-
+                    # After:  -------2--1-------- or -1---------------2-
+
+                    if pos_x_minus_i < 0: # -------1--2-------- ou -1---------------2-
+                        if pos_i_minus_x < genome_size + pos_x_minus_i: # -------1--2--------
+                            distance = pos_i_minus_x
+                            x_before_i = True
+                        else: # -1---------------2-
+                            distance = genome_size + pos_x_minus_i
+                            x_before_i = False
+
+                    else: # -------2--1-------- ou -2---------------1-
+                        if pos_x_minus_i < genome_size + pos_i_minus_x: # -------2--1--------
+                            distance = pos_x_minus_i
+                            x_before_i = False
+                        else:
+                            distance = genome_size + pos_i_minus_x
+                            x_before_i = True
+
+                    # Exit early if genes are too far
+                    if distance > self.interaction_dist:
+                        continue
+
+                    if x_before_i:
+                        if gene.orientation == Orient.LAGGING: # i lagging: +
+                            sign_1_on_x = +1
+                        else:
+                            sign_1_on_x = -1
                     else:
-                        sign_1_on_x = -1
+                        if gene.orientation == Orient.LEADING: # i leading: +
+                            sign_1_on_x = +1
+                        else:
+                            sign_1_on_x = -1
 
-                # Here, we know that distance <= self.interaction_dist
-                strength = 1.0 - distance/self.interaction_dist
+                    # Here, we know that distance <= self.interaction_dist
+                    strength = 1.0 - distance/self.interaction_dist
 
-                # Supercoiling variations are additive
-                pos_tsc += sign_1_on_x * strength * gene_expr[i_gene]
+                    # Supercoiling variations are additive
+                    delta_sc = sign_1_on_x * strength * self.interaction_coef * gene_expr[i_gene]
+                    pos_tsc += delta_sc
 
             sc_tsc[i_pos] = pos_tsc
 

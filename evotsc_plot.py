@@ -313,8 +313,6 @@ def plot_genome_and_tsc(indiv,
 
     norm = mpl.colors.Normalize(-2.0, 2.0) # Extremum values for the SC level
 
-    data = -data # Reverse data to get blue = positive and red = negative SC
-
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
                             norm=norm, cmap=plt.get_cmap('seismic'))
     sc_ax.set_yticklabels([])
