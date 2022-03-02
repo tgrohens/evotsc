@@ -28,7 +28,7 @@ default_basal_expression = 0.5
 selection_coef = 50
 
 # Selection
-selection_method = "exp-rank" # Choices: "fit-prop", "rank", "exp-rank"
+selection_method = "fit-prop" # Choices: "fit-prop", "rank", "exp-rank"
 
 # Environment
 sigma_A = 0.1
