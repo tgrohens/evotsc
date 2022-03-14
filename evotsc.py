@@ -223,7 +223,7 @@ class Individual:
 
         step_size = 0.5
         stop_dist = 1e-7
-        max_eval_steps = 1000
+        max_eval_steps = 200
 
         # Initial values at t = 0
         prev_expr = np.array([gene.basal_expression for gene in self.genes])
