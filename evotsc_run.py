@@ -19,9 +19,10 @@ intergene = 500
 gene_length = 1000
 interaction_dist = 5000
 interaction_coef = 0.3
-sigma_basal = -0.06
-sigma_opt = -0.06
-epsilon = 0.03
+sigma_basal = -0.066
+sigma_opt = -0.042
+epsilon = 0.005
+m = 2.5
 default_basal_expression = 0.5
 
 # Fitness
@@ -166,6 +167,7 @@ def main():
                                        sigma_basal=sigma_basal,
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
+                                       m=m,
                                        selection_coef=selection_coef,
                                        rng=rng)
         # Evaluate the initial individual before creating the clonal population

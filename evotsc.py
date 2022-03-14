@@ -99,6 +99,7 @@ class Individual:
                  sigma_basal: float,
                  sigma_opt: float,
                  epsilon: float,
+                 m: float,
                  selection_coef: int,
                  rng: np.random.Generator = None) -> None:
         self.genes = genes
@@ -108,6 +109,7 @@ class Individual:
         self.sigma_basal = sigma_basal
         self.sigma_opt = sigma_opt
         self.epsilon = epsilon
+        self.m = m
         self.selection_coef = selection_coef
 
         if rng:
@@ -134,6 +136,7 @@ class Individual:
                                self.sigma_basal,
                                self.sigma_opt,
                                self.epsilon,
+                               self.m,
                                self.selection_coef,
                                self.rng)
 
@@ -251,7 +254,7 @@ class Individual:
 
         step_size = 0.5
         stop_dist = 1e-7
-        max_eval_steps = 1000
+        max_eval_steps = 200
 
         # Initial values at t = 0
         prev_expr = np.array([gene.basal_expression for gene in self.genes])
@@ -264,7 +267,10 @@ class Individual:
             sigma_local = self.inter_matrix @ prev_expr
             sigma_total = self.sigma_basal + sigma_local + sigma_env
 
-            iter_expr = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
+            promoter_activity = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
+
+            # We subtract 1 to rescale between exp(-m) and 1
+            iter_expr = np.exp(self.m * (promoter_activity - 1.0))
 
             nouv_expr = step_size * iter_expr + (1 - step_size) * prev_expr
 
@@ -303,7 +309,8 @@ class Individual:
         for i_gene, gene in enumerate(self.genes):
             gene_expr_A[gene.gene_type] += expr_levels_A[i_gene, -1]
 
-        target_A = np.array([1.0, 1.0, 0.0]) # Gene types are AB, A, B
+        # The minimal expression level is exp(-m)
+        target_A = np.array([1.0, 1.0, np.exp(-self.m)]) # Gene types are AB, A, B
 
         gap_A = np.sum(np.square(gene_expr_A / nb_genes_per_type - target_A))
 
@@ -312,7 +319,7 @@ class Individual:
         for i_gene, gene in enumerate(self.genes):
             gene_expr_B[gene.gene_type] += expr_levels_B[i_gene, -1]
 
-        target_B = np.array([1.0, 0.0, 1.0]) # Gene types are AB, A, B
+        target_B = np.array([1.0, np.exp(-self.m), 1.0]) # Gene types are AB, A, B
 
         gap_B = np.sum(np.square(gene_expr_B / nb_genes_per_type - target_B))
 
