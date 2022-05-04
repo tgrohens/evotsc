@@ -311,8 +311,8 @@ def plot_genome_and_tsc(indiv,
     positions = np.linspace(0, genome_length, n, dtype=int)
     data = indiv.compute_final_sc_at(sigma, positions)
 
-    min_sc = -1.0
-    max_sc = 1.0
+    min_sc = -0.15
+    max_sc = 0.15
     norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
 
     if np.min(data) < min_sc or np.max(data) > max_sc:
