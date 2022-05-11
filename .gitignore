@@ -1,8 +1,15 @@
+# Python
 .ipynb_checkpoints
+.python-version
+__pycache__
+
+# Debug
+Sandbox.ipynb
+
+# Outputs
 *.png
 *.pdf
+
+# Misc
 .DS_Store
-__pycache__
-*.cprof
-Sandbox.ipynb
 .vscode
