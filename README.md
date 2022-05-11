@@ -2,6 +2,15 @@ Individual-based evolutionary simulation of the transcription-supercoiling coupl
 
 ## Usage
 
+### Installing
+
+First, install the required packages (preferably inside a virtual environment):
+```
+pip install -r requirements.txt
+```
+
+### Running
+
 To run an experiment with the default parameters, just run:
 ```
 python3 path/to/evotsc_run.py -o `output_folder` -n `final_generation`
