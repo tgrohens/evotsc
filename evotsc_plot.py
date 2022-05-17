@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -316,7 +318,7 @@ def plot_genome_and_tsc(indiv,
     norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
 
     if np.min(data) < min_sc or np.max(data) > max_sc:
-        raise ValueError(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}')
+        print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
                             norm=norm, cmap=plt.get_cmap('seismic'))
