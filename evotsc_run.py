@@ -15,7 +15,7 @@ nb_indivs = 100
 nb_genes = 60
 
 # Genome
-intergene = 500
+intergene = 125
 gene_length = 1000
 interaction_dist = 5000
 interaction_coef = 0.03
