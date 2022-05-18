@@ -18,7 +18,7 @@ nb_genes = 60
 intergene = 500
 gene_length = 1000
 interaction_dist = 5000
-interaction_coef = 0.3
+interaction_coef = 0.03
 sigma_basal = -0.066
 sigma_opt = -0.042
 epsilon = 0.005
@@ -32,8 +32,8 @@ selection_coef = 50
 selection_method = "fit-prop" # Choices: "fit-prop", "rank", "exp-rank"
 
 # Environment
-sigma_A = 0.1
-sigma_B = -0.1
+sigma_A = 0.01
+sigma_B = -0.01
 
 # Mutations
 inversion_poisson_lam = 2.0
