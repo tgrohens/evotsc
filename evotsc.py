@@ -277,7 +277,7 @@ class Individual:
             temporal_expr.append(nouv_expr)
 
             # Check if we're done
-            dist = np.sum(np.abs(nouv_expr - prev_expr)) / self.nb_genes
+            dist = np.abs(nouv_expr - prev_expr).sum() / self.nb_genes
 
             prev_expr = nouv_expr
 
@@ -312,7 +312,7 @@ class Individual:
         # The minimal expression level is exp(-m)
         target_A = np.array([1.0, 1.0, np.exp(-self.m)]) # Gene types are AB, A, B
 
-        gap_A = np.sum(np.square(gene_expr_A / nb_genes_per_type - target_A))
+        gap_A = np.square(gene_expr_A / nb_genes_per_type - target_A).sum()
 
         # Environment B
         gene_expr_B = np.zeros(3)
@@ -321,7 +321,7 @@ class Individual:
 
         target_B = np.array([1.0, np.exp(-self.m), 1.0]) # Gene types are AB, A, B
 
-        gap_B = np.sum(np.square(gene_expr_B / nb_genes_per_type - target_B))
+        gap_B = np.square(gene_expr_B / nb_genes_per_type - target_B).sum()
 
         fitness = np.exp(- self.selection_coef * (gap_A + gap_B))
 
@@ -703,7 +703,7 @@ class Population:
         # Probability is directly proportional to fitness
         if self.selection_method == 'fit-prop':
             old_fitnesses = np.array([indiv.fitness for indiv in self.individuals])
-            total_fitness = np.sum(old_fitnesses)
+            total_fitness = old_fitnesses.sum()
             prob = old_fitnesses/total_fitness
 
         # Probability is proportional to the rank in the population, sorted by
@@ -758,7 +758,7 @@ class Population:
         # Meilleur individu et fitness moyenne
         new_fitnesses = np.array([indiv.fitness for indiv in new_indivs])
         best_indiv = new_indivs[np.argmax(new_fitnesses)].clone()
-        avg_fit = np.sum(new_fitnesses)/self.nb_indivs
+        avg_fit = new_fitnesses.sum() / self.nb_indivs
 
         return best_indiv, avg_fit
 
