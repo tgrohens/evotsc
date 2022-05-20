@@ -517,12 +517,14 @@ class Individual:
         (temporal_expr_A, temporal_expr_B), fitness = self.evaluate(sigma_A, sigma_B)
 
 
+        half_expr = (1 + np.exp(- self.m)) / 2
+
         ### Environment A
         on_genes_A = np.zeros(3, dtype=int)
         off_genes_A = np.zeros(3, dtype=int)
         final_expr_A = temporal_expr_A[:, -1]
         for i_gene, gene in enumerate(self.genes):
-            if final_expr_A[i_gene] > 0.5:
+            if final_expr_A[i_gene] > half_expr:
                 on_genes_A[gene.gene_type] += 1
             else:
                 off_genes_A[gene.gene_type] += 1
@@ -532,7 +534,7 @@ class Individual:
         off_genes_B = np.zeros(3, dtype=int)
         final_expr_B = temporal_expr_B[:, -1]
         for i_gene, gene in enumerate(self.genes):
-            if final_expr_B[i_gene] > 0.5:
+            if final_expr_B[i_gene] > half_expr:
                 on_genes_B[gene.gene_type] += 1
             else:
                 off_genes_B[gene.gene_type] += 1

@@ -23,7 +23,7 @@ sigma_basal = -0.066
 sigma_opt = -0.042
 epsilon = 0.005
 m = 2.5
-default_basal_expression = 0.5
+default_basal_expression = (1 + np.exp(- m)) / 2 # Average of the maximum and minimum expression levels in the model
 
 # Fitness
 selection_coef = 50
