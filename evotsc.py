@@ -650,7 +650,7 @@ class Individual:
 
             sc_tsc[i_pos] = pos_tsc
 
-        return sc_tsc
+        return sc_tsc + sigma + self.sigma_basal
 
 
 class Population:

@@ -311,7 +311,7 @@ def plot_genome_and_tsc(indiv,
 
     #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
     positions = np.linspace(0, genome_length, n, dtype=int)
-    data = indiv.compute_final_sc_at(sigma, positions)
+    data = indiv.compute_final_sc_at(sigma, positions) - indiv.sigma_basal
 
     min_sc = -0.15
     max_sc = 0.15
@@ -331,7 +331,7 @@ def plot_genome_and_tsc(indiv,
     # Color bar for the SC level
     if show_bar:
         cbar = fig.colorbar(mesh, ax=[ax, sc_ax], shrink=0.7, pad=0.0, location='left')
-        cbar.set_label('σ', fontsize=20)
+        cbar.set_label('$\sigma - \sigma_{basal}$', fontsize=20)
         cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=15)
 
