@@ -1,3 +1,4 @@
+import copy
 from typing import List, Tuple
 
 import numpy as np
@@ -300,7 +301,7 @@ class Individual:
         for inv in range(nb_inversions):
             # Here, we are only looking at intergenic distances, and do not care
             # about gene lengths, so we only count non-coding bases.
-            _, noncoding_size = self.compute_gene_positions(include_coding=False)
+            gene_positions, noncoding_size = self.compute_gene_positions(include_coding=False)
 
             start_pos = self.rng.integers(0, noncoding_size)
             end_pos = self.rng.integers(0, noncoding_size)
@@ -309,14 +310,16 @@ class Individual:
             if end_pos < start_pos:
                 start_pos, end_pos = end_pos, start_pos
 
-            if self.perform_inversion(start_pos, end_pos):
+            if self.perform_inversion(gene_positions, start_pos, end_pos):
                 did_mutate = True
 
         return did_mutate
 
 
-    def perform_inversion(self, start_pos: int, end_pos: int) -> bool:
-        gene_positions, _ = self.compute_gene_positions(include_coding=False)
+    def perform_inversion(self,
+                          gene_positions: np.ndarray,
+                          start_pos: int,
+                          end_pos: int) -> bool:
 
         # Dernier gène avant l'inversion
         cur_pos = 0
