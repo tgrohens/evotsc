@@ -1,4 +1,3 @@
-import enum
 from typing import List, Tuple
 
 import numpy as np
@@ -20,14 +19,10 @@ class Mutation:
         self.inversion_poisson_lam = inversion_poisson_lam
 
 
-class Orient(enum.IntEnum):
-    LEADING = 0
-    LAGGING = 1
-
 class Gene:
     def __init__(self,
                  intergene: int,
-                 orientation: Orient,
+                 orientation: int,
                  length: int,
                  basal_expression: float,
                  gene_type: int,
@@ -75,7 +70,7 @@ class Gene:
             else:
                 basal_expression = default_basal_expression
             new_gene = cls(intergene=intergene,
-                           orientation=Orient(rng.integers(2)),
+                           orientation=rng.integers(2),
                            length=length,
                            basal_expression=basal_expression,
                            gene_type=gene_types[i_gene],
@@ -172,7 +167,7 @@ class Individual:
             if include_coding:
                 # If the gene is lagging, add the gene length minus one to
                 # the start position to get the promoter position
-                if gene.orientation == Orient.LAGGING:
+                if gene.orientation == 1: # Lagging
                     positions[i_gene] += gene.length - 1
 
                 cur_pos += gene.length
@@ -385,7 +380,7 @@ class Individual:
                 inverted_gene.intergene = b + d # l'intergène du dernier gène post-inversion est b + d
 
             # Switch orientations
-            inverted_gene.orientation = Orient(1 - inverted_gene.orientation)
+            inverted_gene.orientation = 1 - inverted_gene.orientation
 
             new_genes.append(inverted_gene)
 
@@ -458,14 +453,14 @@ class Individual:
                 # We compute the influence of gene i at position x
 
                 # If x is inside gene i, the computation is slightly different
-                if ((gene.orientation == Orient.LEADING and
-                    x >= gene_positions[i_gene] and
-                    x < gene_positions[i_gene] + gene.length) or
-                   (gene.orientation == Orient.LAGGING and
-                    x >= gene_positions[i_gene] - gene.length + 1 and
-                    x < gene_positions[i_gene] + 1)):
+                if ((gene.orientation == 0 and  # Leading
+                     x >= gene_positions[i_gene] and
+                     x < gene_positions[i_gene] + gene.length) or
+                    (gene.orientation == 1 and
+                     x >= gene_positions[i_gene] - gene.length + 1 and
+                     x < gene_positions[i_gene] + 1)):
 
-                    if gene.orientation == Orient.LEADING:
+                    if gene.orientation == 0:  # Leading
                         pos_inside = (x - gene_positions[i_gene]) / gene.length
                     else:
                         pos_inside = (x - (gene_positions[i_gene] - gene.length + 1)) / gene.length
@@ -480,7 +475,7 @@ class Individual:
                                 (1 - gene.length / (2 * self.interaction_dist)) *
                                 self.interaction_coef * gene_expr[i_gene])
 
-                    if gene.orientation == Orient.LAGGING:
+                    if gene.orientation == 1:  # Lagging
                         delta_sc = -delta_sc
 
                     pos_tsc += delta_sc
@@ -489,7 +484,7 @@ class Individual:
 
                     # We use the distance to the middle of the gene to compute
                     # the interaction level.
-                    if gene.orientation == Orient.LEADING:
+                    if gene.orientation == 0:  # Leading
                         pos_i = gene_positions[i_gene] + gene.length // 2
                     else:
                         pos_i = gene_positions[i_gene] - gene.length // 2
@@ -522,12 +517,12 @@ class Individual:
                         continue
 
                     if x_before_i:
-                        if gene.orientation == Orient.LAGGING: # i lagging: +
+                        if gene.orientation == 1: # i lagging: +
                             sign_1_on_x = +1
                         else:
                             sign_1_on_x = -1
                     else:
-                        if gene.orientation == Orient.LEADING: # i leading: +
+                        if gene.orientation == 0: # i leading: +
                             sign_1_on_x = +1
                         else:
                             sign_1_on_x = -1
