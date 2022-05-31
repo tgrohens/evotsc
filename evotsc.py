@@ -1,6 +1,9 @@
 import enum
-import numpy as np
 from typing import List, Tuple
+
+import numpy as np
+
+import evotsc_core
 
 # Class that holds all the mutation parameters
 class Mutation:
@@ -181,152 +184,40 @@ class Individual:
 
     def compute_inter_matrix(self) -> np.ndarray:
         gene_positions, genome_size = self.compute_gene_positions(include_coding=True)
-        inter_matrix = np.zeros((self.nb_genes, self.nb_genes))
-
-        for i in range(self.nb_genes):
-            for j in range(self.nb_genes):
-
-                # We compute the influence of gene 2/j on gene 1/i.
-
-                if i == j: # It's the same gene
-                    continue
-
-                # As genes have a non-zero length, the relevant distance is
-                # between the middle of gene j and the promoter of gene i.
-
-                if self.genes[j].orientation == Orient.LEADING:
-                    pos_j = gene_positions[j] + self.genes[j].length // 2
-                else: # self.genes[j].orientation == Orient.LAGGING:
-                    pos_j = gene_positions[j] - self.genes[j].length // 2
-
-
-                pos_1_minus_2 = gene_positions[i] - pos_j
-                pos_2_minus_1 = - pos_1_minus_2
-
-                # We want to know whether gene 1 comes before or after gene 2
-                # Before: -------1--2-------- or -2---------------1-
-                # After:  -------2--1-------- or -1---------------2-
-
-                if pos_1_minus_2 < 0: # -------1--2-------- ou -1---------------2-
-                    if pos_2_minus_1 < genome_size + pos_1_minus_2: # -------1--2--------
-                        distance = pos_2_minus_1
-                        i_before_j = True
-                    else: # -1---------------2-
-                        distance = genome_size + pos_1_minus_2
-                        i_before_j = False
-
-                else: # -------2--1-------- ou -2---------------1-
-                    if pos_1_minus_2 < genome_size + pos_2_minus_1: # -------2--1--------
-                        distance = pos_1_minus_2
-                        i_before_j = False
-                    else:
-                        distance = genome_size + pos_2_minus_1
-                        i_before_j = True
-
-                # Exit early if genes are too far
-                if distance > self.interaction_dist:
-                    # inter_matrix[i, j] and inter_matrix[j, i] are already 0.0
-                    continue
-
-                if i_before_j:
-                    if self.genes[j].orientation == Orient.LEADING: # j leading: +
-                        sign_2_on_1 = +1
-                    else:
-                        sign_2_on_1 = -1
-                else:
-                    if self.genes[j].orientation == Orient.LAGGING: # j lagging : +
-                        sign_2_on_1 = +1
-                    else:
-                        sign_2_on_1 = -1
-
-                # Here, we know that distance <= self.interaction_dist
-                strength = 1.0 - distance/self.interaction_dist
-
-                inter_matrix[i, j] = sign_2_on_1 * strength * self.interaction_coef
-
-        inter_matrix = -inter_matrix # Negative sigma -> more transcription
-
-        return inter_matrix
-
+        gene_orientations = np.array([gene.orientation for gene in self.genes])
+        gene_lengths = np.array([gene.length for gene in self.genes])
+        return evotsc_core.compute_inter_matrix_numba(nb_genes=self.nb_genes,
+                                                    gene_positions=gene_positions,
+                                                    gene_orientations=gene_orientations,
+                                                    gene_lengths=gene_lengths,
+                                                    genome_size=genome_size,
+                                                    interaction_dist=self.interaction_dist,
+                                                    interaction_coef=self.interaction_coef)
 
     # Fixpoint solver with a simple step by step iteration
     def run_system(self, sigma_env: float) -> np.ndarray:
 
-        step_size = 0.5
-        stop_dist = 1e-7
-        max_eval_steps = 200
+        init_expr = np.array([gene.basal_expression for gene in self.genes])
 
-        # Initial values at t = 0
-        prev_expr = np.array([gene.basal_expression for gene in self.genes])
-        temporal_expr = [prev_expr]
-
-        # Iterate the system
-        it = 0
-        cont = True
-        while cont:
-            sigma_local = self.inter_matrix @ prev_expr
-            sigma_total = self.sigma_basal + sigma_local + sigma_env
-
-            promoter_activity = 1.0 / (1.0 + np.exp((sigma_total - self.sigma_opt)/self.epsilon))
-
-            # We subtract 1 to rescale between exp(-m) and 1
-            iter_expr = np.exp(self.m * (promoter_activity - 1.0))
-
-            nouv_expr = step_size * iter_expr + (1 - step_size) * prev_expr
-
-            temporal_expr.append(nouv_expr)
-
-            # Check if we're done
-            dist = np.abs(nouv_expr - prev_expr).sum() / self.nb_genes
-
-            prev_expr = nouv_expr
-
-            if dist < stop_dist:
-                cont = False
-
-            it += 1
-            if it == max_eval_steps:
-                cont = False
-
-        temporal_expr = np.array(temporal_expr).T
-
-        return temporal_expr
+        return evotsc_core.run_system_numba(nb_genes=self.nb_genes,
+                                            init_expr=init_expr,
+                                            inter_matrix=self.inter_matrix,
+                                            sigma_basal=self.sigma_basal,
+                                            sigma_opt=self.sigma_opt,
+                                            epsilon=self.epsilon,
+                                            m=self.m,
+                                            sigma_env=sigma_env)
 
 
-    def compute_fitness(self) -> float:
-        # We compute the gap g, which is the distance to the optimal phenotype,
-        # as the sum for each type of gene (A, B, AB) of:
-        # (mean expression of the genes of that type - expected expression) ^ 2
-        # The fitness f is then given by: f = exp(- k g) where k is the
-        # selection coefficient.
-
-        nb_genes_per_type = self.nb_genes / 3
-
+    def compute_fitness(self):
         expr_levels_A, expr_levels_B = self.expr_levels
-
-        # Environment A
-        gene_expr_A = np.zeros(3)
-        for i_gene, gene in enumerate(self.genes):
-            gene_expr_A[gene.gene_type] += expr_levels_A[i_gene, -1]
-
-        # The minimal expression level is exp(-m)
-        target_A = np.array([1.0, 1.0, np.exp(-self.m)]) # Gene types are AB, A, B
-
-        gap_A = np.square(gene_expr_A / nb_genes_per_type - target_A).sum()
-
-        # Environment B
-        gene_expr_B = np.zeros(3)
-        for i_gene, gene in enumerate(self.genes):
-            gene_expr_B[gene.gene_type] += expr_levels_B[i_gene, -1]
-
-        target_B = np.array([1.0, np.exp(-self.m), 1.0]) # Gene types are AB, A, B
-
-        gap_B = np.square(gene_expr_B / nb_genes_per_type - target_B).sum()
-
-        fitness = np.exp(- self.selection_coef * (gap_A + gap_B))
-
-        return fitness
-
+        gene_types = np.array([gene.gene_type for gene in self.genes])
+        return evotsc_core.compute_fitness_numba(nb_genes=self.nb_genes,
+                                                 expr_levels_A=expr_levels_A,
+                                                 expr_levels_B=expr_levels_B,
+                                                 gene_types=gene_types,
+                                                 m=self.m,
+                                                 selection_coef=self.selection_coef)
 
     def evaluate(self, sigma_A: float, sigma_B: float) -> Tuple[np.ndarray, float]:
         if self.already_evaluated:
@@ -522,7 +413,7 @@ class Individual:
         ### Environment A
         on_genes_A = np.zeros(3, dtype=int)
         off_genes_A = np.zeros(3, dtype=int)
-        final_expr_A = temporal_expr_A[:, -1]
+        final_expr_A = temporal_expr_A[-1, :]
         for i_gene, gene in enumerate(self.genes):
             if final_expr_A[i_gene] > half_expr:
                 on_genes_A[gene.gene_type] += 1
@@ -532,7 +423,7 @@ class Individual:
         ### Environment B
         on_genes_B = np.zeros(3, dtype=int)
         off_genes_B = np.zeros(3, dtype=int)
-        final_expr_B = temporal_expr_B[:, -1]
+        final_expr_B = temporal_expr_B[-1, :]
         for i_gene, gene in enumerate(self.genes):
             if final_expr_B[i_gene] > half_expr:
                 on_genes_B[gene.gene_type] += 1
