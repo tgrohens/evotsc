@@ -445,7 +445,7 @@ class Individual:
         self.already_evaluated = False
         (temporal_expr, _), _ = self.evaluate(sigma, sigma)
         self.already_evaluated = False # Reset in case the individual is reused
-        gene_expr = temporal_expr[:, -1]
+        gene_expr = temporal_expr[-1, :]
 
         for i_pos, x in enumerate(positions):
 

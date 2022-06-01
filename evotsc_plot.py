@@ -56,13 +56,20 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.ylim(-0.05, 1.05)
 
     for i_gene, gene in enumerate(indiv.genes):
-        linestyle = ['solid', 'dashed'][gene.orientation]
-        plt.plot(temporal_expr_A[i_gene, :],
+        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        plt.plot(temporal_expr_A[:, i_gene],
                  linestyle=linestyle,
                  linewidth=2,
                  color=colors[gene.gene_type],
                  #alpha=0.25,
                  label=f'Gene {gene.id}')
+
+    x_min, x_max = plt.xlim()
+    t_max = temporal_expr_A.shape[0] - 1
+    half_expr = (1+np.exp(-indiv.m))/2
+    plt.hlines(half_expr, 0, t_max, linestyle=':', linewidth=2,
+           color='tab:pink', label='Half transcription level')
+    plt.xlim(x_min, x_max)
 
     plt.grid(linestyle=':')
     #plt.xlabel('Time', fontsize='large')
@@ -78,13 +85,20 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.ylim(-0.05, 1.05)
 
     for i_gene, gene in enumerate(indiv.genes):
-        linestyle = ['solid', 'dashed'][gene.orientation]
-        plt.plot(temporal_expr_B[i_gene, :],
+        linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        plt.plot(temporal_expr_B[:, i_gene],
                  linestyle=linestyle,
                  linewidth=2,
                  color=colors[gene.gene_type],
                  #alpha=0.25,
                  label=f'Gene {gene.id}')
+
+    x_min, x_max = plt.xlim()
+    half_expr = (1+np.exp(-indiv.m))/2
+    t_max = temporal_expr_B.shape[0] - 1
+    plt.hlines(half_expr, 0, t_max, linestyle=':', linewidth=2,
+           color='tab:pink', label='Half transcription level')
+    plt.xlim(x_min, x_max)
 
     plt.grid(linestyle=':')
     plt.xlabel('Time', fontsize=label_fontsize)
@@ -96,14 +110,10 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     #plt.title('Environment B')
 
     ## Final stuff
-    plt.suptitle(f'{plot_title} fitness: {fitness:.5}')
 
     plt.tight_layout()
-
-    plt.savefig(plot_name, dpi=dpi, bbox_inches='tight')
-
+    plt.savefig(plot_name + '.pdf', dpi=dpi, bbox_inches='tight')
     plt.show()
-
     plt.close()
 
 
@@ -149,7 +159,7 @@ def plot_genome(indiv, print_ids=False, name=None):
     for i_gene, gene in enumerate(indiv.genes):
         ## Compute the angles of the boundaries of the gene
         start_pos_deg = 360 * gene_pos[i_gene] / genome_length
-        if gene.orientation == evotsc.Orient.LEADING:
+        if gene.orientation == 0:  # Leading
             end_pos_deg = 360 * (gene_pos[i_gene] + gene.length - 1) / genome_length
         else:
             end_pos_deg = 360 * (gene_pos[i_gene] - (gene.length - 1)) / genome_length
@@ -192,7 +202,7 @@ def plot_genome(indiv, print_ids=False, name=None):
         ## Print gene ID
         if print_ids and (i_gene % 5 == 0):
             ha = 'left'
-            if gene.orientation == evotsc.Orient.LAGGING:
+            if gene.orientation == 1:  # Lagging
                 ha = 'right'
             ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}', rotation=orient_angle, ha=ha, va='bottom',
                      rotation_mode='anchor')
@@ -247,7 +257,7 @@ def plot_genome_and_tsc(indiv,
     for i_gene, gene in enumerate(indiv.genes):
         ## Compute the angles of the boundaries of the gene
         start_pos_deg = 360 * gene_pos[i_gene] / genome_length
-        if gene.orientation == evotsc.Orient.LEADING:
+        if gene.orientation == 0:  # Leading
             end_pos_deg = 360 * (gene_pos[i_gene] + gene.length - 1) / genome_length
         else:
             end_pos_deg = 360 * (gene_pos[i_gene] - (gene.length - 1)) / genome_length
@@ -290,7 +300,7 @@ def plot_genome_and_tsc(indiv,
         ## Print gene ID
         if print_ids and (i_gene % 5 == 0):
             ha = 'left'
-            if gene.orientation == evotsc.Orient.LAGGING:
+            if gene.orientation == 1:  # Lagging
                 ha = 'right'
             ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}',
                     rotation=orient_angle, ha=ha, va='bottom', rotation_mode='anchor',
