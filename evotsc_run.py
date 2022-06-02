@@ -43,7 +43,7 @@ basal_sc_mutation_prob = 0.0 #1e-1
 basal_sc_mutation_var = 0.0 #1e-4
 
 # Logging
-save_full_step = 10_000
+save_step = 50_000
 
 
 def get_git_hash():
@@ -91,7 +91,7 @@ def print_params(output_dir, seed, neutral):
         params_file.write(f'basal_sc_mutation_prob: {basal_sc_mutation_prob}\n')
         params_file.write(f'basal_sc_mutation_var: {basal_sc_mutation_var}\n')
         # Logging
-        params_file.write(f'save_full_step: {save_full_step}\n')
+        params_file.write(f'save_step: {save_step}\n')
 
 
 def save_pop(output_dir, pop, gen):
@@ -226,7 +226,7 @@ def main():
             print(f'Gen {gen}: best fit {best_indiv.fitness:.5}, avg fit {avg_fit:.5}')
             write_stats(stats_file, best_indiv, avg_fit, gen)
 
-            if gen % save_full_step == 0:
+            if gen % save_step == 0:
                 save_pop(output_dir, population, gen)
 
         stats_file.close()
@@ -236,7 +236,7 @@ def main():
             population.neutral_step()
             print(f'Generation {gen}')
 
-            if gen % save_full_step == 0:
+            if gen % save_step == 0:
                 save_pop(output_dir, population, gen)
 
 
