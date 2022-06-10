@@ -67,6 +67,9 @@ class Gene:
 
         for i_gene in range(nb_genes):
             if default_basal_expression is None:
+                # Note: this can be smaller than the minimum expression level
+                # (exp(-m)), but this setting is not actually used in the
+                # evolutionary runs, so it doesn't really matter.
                 basal_expression = rng.random()
             else:
                 basal_expression = default_basal_expression
