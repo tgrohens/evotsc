@@ -231,8 +231,11 @@ def plot_genome(indiv, print_ids=False, name=None):
 def plot_genome_and_tsc(indiv,
                         sigma,
                         show_bar=False,
+                        color_by_type=True,
+                        use_letters=False,
                         print_ids=False,
-                        name=None):
+                        id_interval=5,
+                        plot_name=None):
 
     # Compute gene positions
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
@@ -251,8 +254,16 @@ def plot_genome_and_tsc(indiv,
 
     ## Plot the genes themselves
 
-    gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+    if color_by_type:
+        gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+    else:
+        gene_colors = mpl.cm.get_cmap('viridis', indiv.nb_genes)(range(indiv.nb_genes))
     gene_types = ['AB', 'A', 'B']
+
+    if use_letters:
+        if indiv.nb_genes > 26:
+            raise ValueError('Trying to plot with letters on an individual with too many genes')
+        letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     for i_gene, gene in enumerate(indiv.genes):
         ## Compute the angles of the boundaries of the gene
@@ -273,11 +284,16 @@ def plot_genome_and_tsc(indiv,
         x0 = np.sin(start_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
         y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
 
+        if color_by_type:
+            gene_color = gene_type_color[gene.gene_type]
+        else:
+            gene_color = gene_colors[i_gene]
+
         rect = plt.Rectangle(xy=(x0, y0),
                              width=rect_width,
                              height=rect_height,
                              angle=orient_angle, #in degrees anti-clockwise about xy.
-                             facecolor=gene_type_color[gene.gene_type],
+                             facecolor=gene_color,
                              edgecolor='black',
                              label=f'Gene {i_gene}')
 
@@ -298,13 +314,24 @@ def plot_genome_and_tsc(indiv,
         ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
         ## Print gene ID
-        if print_ids and (i_gene % 5 == 0):
-            ha = 'left'
-            if gene.orientation == 1:  # Lagging
+        if print_ids and (i_gene % id_interval == 0):
+            if use_letters:
+                gene_name = letters[i_gene]
+            else:
+                gene_name = i_gene
+            if orient_angle < 120 or orient_angle > 240:  # Top part
+                ha = 'left'
+                if gene.orientation == 1:  # Lagging
+                    ha = 'right'
+                ax.text(x=0.92*x0, y=0.92*y0, s=gene_name, rotation=orient_angle,
+                        ha=ha, va='bottom', rotation_mode='anchor', fontsize=15)
+            else:  # Bottom part
                 ha = 'right'
-            ax.text(x=0.92*x0, y=0.92*y0, s=f'{i_gene}',
-                    rotation=orient_angle, ha=ha, va='bottom', rotation_mode='anchor',
-                    fontsize=15)
+                if gene.orientation == 1:  # Lagging
+                    ha = 'left'
+                ax.text(x=0.935*x0, y=0.935*y0, s=gene_name, rotation=orient_angle+180,
+                        ha=ha, va='top', rotation_mode='anchor', fontsize=15)
+
 
     ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
     sc_ax = fig.add_axes(pos_rect, projection='polar', frameon=False)
@@ -321,7 +348,7 @@ def plot_genome_and_tsc(indiv,
 
     #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
     positions = np.linspace(0, genome_length, n, dtype=int)
-    data = indiv.compute_final_sc_at(sigma, positions) - indiv.sigma_basal
+    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
 
     min_sc = -0.15
     max_sc = 0.15
@@ -341,26 +368,30 @@ def plot_genome_and_tsc(indiv,
     # Color bar for the SC level
     if show_bar:
         cbar = fig.colorbar(mesh, ax=[ax, sc_ax], shrink=0.7, pad=0.0, location='left')
-        cbar.set_label('$\sigma - \sigma_{basal}$', fontsize=20)
+        cbar.set_label('$\sigma_{TSC}$', fontsize=20)
         cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=15)
 
     ## Legend: gene types and interaction distance
-    patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
-               for color, label in zip(gene_type_color, gene_types)]
-    ax.legend(handles=patches, title='Gene type', loc='center',
-              title_fontsize=15, fontsize=15)
+    if color_by_type:
+        patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
+                for color, label in zip(gene_type_color, gene_types)]
+        ax.legend(handles=patches, title='Gene type', loc='center',
+                title_fontsize=15, fontsize=15)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
-    line_y = -0.3
+    if color_by_type:
+        line_y = -0.3
+    else:
+        line_y = -0.1
     ax.plot([-line_len, line_len], [line_y, line_y],
              color='black',
              linewidth=1)
     ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=15)
 
     ## Wrapping up
-    if name:
-        plt.savefig(name, dpi=300, bbox_inches='tight')
+    if plot_name:
+        plt.savefig(plot_name, dpi=300, bbox_inches='tight')
 
     plt.show()
 
