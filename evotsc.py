@@ -119,6 +119,9 @@ class Individual:
         else:
             self.rng = np.random.default_rng()
 
+        self.inter_matrix = None
+        self.expr_levels = None
+        self.fitness = None
         self.already_evaluated = False
 
 
@@ -445,8 +448,9 @@ class Individual:
         sc_tsc = np.zeros(nb_pos)
 
         # Run the individual
-        self.already_evaluated = False
-        (temporal_expr, _), _ = self.evaluate(sigma, sigma)
+        if self.inter_matrix is None:
+            self.inter_matrix = self.compute_inter_matrix()
+        temporal_expr = self.run_system(sigma)
         self.already_evaluated = False # Reset in case the individual is reused
         gene_expr = temporal_expr[-1, :]
 
