@@ -145,8 +145,13 @@ def plot_genome_and_tsc(indiv,
                         id_interval=5,
                         plot_name=None):
 
-    # Compute gene positions
+    # Compute gene positions and activation levels
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
+
+    # Boolean array, True if a gene's final expression level is > half the max
+    if indiv.inter_matrix is None:
+        indiv.inter_matrix = indiv.compute_inter_matrix()
+    activated_genes = indiv.run_system(sigma)[-1, :] > (1 + np.exp(- indiv.m)) / 2
 
     # Plot
     pos_rect = [0, 0, 1, 1]
@@ -163,7 +168,10 @@ def plot_genome_and_tsc(indiv,
     ## Plot the genes themselves
 
     if color_by_type:
-        gene_type_color = ['tab:blue', 'tab:red', 'tab:green'] # AB, A, B
+        colors = plt.cm.get_cmap('tab20').colors
+        #                   AB: blue   A:  red    B: green
+        gene_type_color = [[colors[1], colors[7], colors[5]],  # light: off
+                           [colors[0], colors[6], colors[4]]]  # normal: on
     else:
         gene_colors = mpl.cm.get_cmap('viridis', indiv.nb_genes)(range(indiv.nb_genes))
     gene_types = ['AB', 'A', 'B']
@@ -193,7 +201,7 @@ def plot_genome_and_tsc(indiv,
         y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
 
         if color_by_type:
-            gene_color = gene_type_color[gene.gene_type]
+            gene_color = gene_type_color[activated_genes[i_gene]][gene.gene_type]
         else:
             gene_color = gene_colors[i_gene]
 
@@ -282,10 +290,14 @@ def plot_genome_and_tsc(indiv,
 
     ## Legend: gene types and interaction distance
     if color_by_type:
-        patches = [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
-                for color, label in zip(gene_type_color, gene_types)]
-        ax.legend(handles=patches, title='Gene type', loc='center',
-                title_fontsize=15, fontsize=15)
+        patches = ([mpl.patches.Patch(facecolor=color, edgecolor='black', label=label + ' (on)')
+                    for color, label in zip(gene_type_color[1], gene_types)] +
+                   [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label + ' (off)')
+                    for color, label in zip(gene_type_color[0], gene_types)])
+
+        ax.legend(handles=patches, title='Gene type', loc='center', ncol=2,
+                  handletextpad=0.6, #columnspacing=1.0,
+                  title_fontsize=15, fontsize=15)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
     if color_by_type:
