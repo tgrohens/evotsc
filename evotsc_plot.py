@@ -32,7 +32,7 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
                  label=f'Gene {indiv.genes[gene].id}')
 
     plt.grid(linestyle=':')
-    plt.xlabel('Time', fontsize='large')
+    plt.xlabel('Iteration steps', fontsize='large')
     plt.ylabel('Expression level', fontsize='large')
 
     plt.legend(loc='center right')
@@ -43,11 +43,13 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
     plt.close()
 
 
-def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
+def plot_expr_AB(indiv, sigma_A, sigma_B, color_by_type=True, plot_title='', plot_name=''):
 
     (temporal_expr_A, temporal_expr_B), fitness = indiv.evaluate(sigma_A, sigma_B)
 
-    colors = ['tab:blue', 'tab:red', 'tab:green'] # AB: blue, A: red, B: green
+    type_colors = ['tab:blue', 'tab:red', 'tab:green'] # AB: blue, A: red, B: green
+    gene_colors = mpl.cm.get_cmap('viridis', indiv.nb_genes)(range(indiv.nb_genes))
+
 
     plt.figure(figsize=(9, 8), dpi=dpi)
 
@@ -57,10 +59,14 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
     for i_gene, gene in enumerate(indiv.genes):
         linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        if color_by_type:
+            color = type_colors[gene.gene_type]
+        else:
+            color = gene_colors[gene.id]
         plt.plot(temporal_expr_A[:, i_gene],
                  linestyle=linestyle,
                  linewidth=2,
-                 color=colors[gene.gene_type],
+                 color=color,
                  #alpha=0.25,
                  label=f'Gene {gene.id}')
 
@@ -72,7 +78,7 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.xlim(x_min, x_max)
 
     plt.grid(linestyle=':')
-    #plt.xlabel('Time', fontsize='large')
+    #plt.xlabel('Iteration steps', fontsize='large')
     plt.ylabel('Expression level', fontsize=label_fontsize)
 
     plt.tick_params(axis='both', which='major', labelsize=tick_fontsize)
@@ -86,10 +92,14 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
 
     for i_gene, gene in enumerate(indiv.genes):
         linestyle = 'solid' if gene.orientation == 0 else 'dashed'
+        if color_by_type:
+            color = type_colors[gene.gene_type]
+        else:
+            color = gene_colors[gene.id]
         plt.plot(temporal_expr_B[:, i_gene],
                  linestyle=linestyle,
                  linewidth=2,
-                 color=colors[gene.gene_type],
+                 color=color,
                  #alpha=0.25,
                  label=f'Gene {gene.id}')
 
@@ -101,7 +111,7 @@ def plot_expr_AB(indiv, sigma_A, sigma_B, plot_title, plot_name):
     plt.xlim(x_min, x_max)
 
     plt.grid(linestyle=':')
-    plt.xlabel('Time', fontsize=label_fontsize)
+    plt.xlabel('Iteration steps', fontsize=label_fontsize)
     plt.ylabel('Expression level', fontsize=label_fontsize)
 
     plt.tick_params(axis='both', which='major', labelsize=tick_fontsize)
@@ -139,7 +149,7 @@ def explain(indiv, sigma_A, sigma_B):
 def plot_genome_and_tsc(indiv,
                         sigma,
                         show_bar=False,
-                        color_by_type=True,
+                        coloring_type='type',
                         use_letters=False,
                         print_ids=False,
                         id_interval=5,
@@ -167,7 +177,9 @@ def plot_genome_and_tsc(indiv,
 
     ## Plot the genes themselves
 
-    if color_by_type:
+    if coloring_type == 'type':
+        gene_type_color = ['tab:blue', 'tab:red', 'tab:green']
+    elif coloring_type == 'on-off':
         colors = plt.cm.get_cmap('tab20').colors
         #                   AB: blue   A:  red    B: green
         gene_type_color = [[colors[1], colors[7], colors[5]],  # light: off
@@ -200,7 +212,9 @@ def plot_genome_and_tsc(indiv,
         x0 = np.sin(start_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
         y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
 
-        if color_by_type:
+        if coloring_type == 'type':
+            gene_color = gene_type_color[gene.gene_type]
+        elif coloring_type == 'on-off':
             gene_color = gene_type_color[activated_genes[i_gene]][gene.gene_type]
         else:
             gene_color = gene_colors[i_gene]
@@ -289,18 +303,30 @@ def plot_genome_and_tsc(indiv,
         cbar.ax.tick_params(labelsize=15)
 
     ## Legend: gene types and interaction distance
-    if color_by_type:
+
+    if coloring_type == 'type':
+        draw_legend = True
+        patches = ([mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
+            for color, label in zip(gene_type_color, gene_types)])
+        ncol = 1
+
+    elif coloring_type == 'on-off':
+        draw_legend = True
         patches = ([mpl.patches.Patch(facecolor=color, edgecolor='black', label=label + ' (on)')
                     for color, label in zip(gene_type_color[1], gene_types)] +
                    [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label + ' (off)')
                     for color, label in zip(gene_type_color[0], gene_types)])
+        ncol = 2
+    else:
+        draw_legend = False
 
-        ax.legend(handles=patches, title='Gene type', loc='center', ncol=2,
+    if draw_legend:
+        ax.legend(handles=patches, title='Gene type', loc='center', ncol=ncol,
                   handletextpad=0.6, #columnspacing=1.0,
                   title_fontsize=15, fontsize=15)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
-    if color_by_type:
+    if draw_legend:
         line_y = -0.3
     else:
         line_y = -0.1
