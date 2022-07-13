@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import evotsc
 
 label_fontsize=20
 tick_fontsize=15
@@ -297,7 +296,18 @@ def plot_genome_and_tsc(indiv,
 
     # Color bar for the SC level
     if show_bar:
-        cbar = fig.colorbar(mesh, ax=[ax, sc_ax], shrink=0.7, pad=0.0, location='left')
+        height = 0.83
+        #          [left,  bottom,    width,  height]
+        pos_rect = [-0.15, (1 - height)/2, 1, height]
+        cbar_ax = fig.add_axes(pos_rect, frameon=False)
+        cbar_ax.set_axis_off()
+
+        cbar = fig.colorbar(mesh,
+            ax=cbar_ax,
+            pad=0.0,
+            location='left'
+            )
+
         cbar.set_label('$\sigma_{TSC}$', fontsize=20)
         cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=15)
