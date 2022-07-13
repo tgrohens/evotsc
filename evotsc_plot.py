@@ -174,6 +174,8 @@ def plot_genome_and_tsc(indiv,
     ax.add_patch(circle)
     ax.set_axis_off()
 
+    text_size = 18
+
     ## Plot the genes themselves
 
     if coloring_type == 'type':
@@ -252,14 +254,14 @@ def plot_genome_and_tsc(indiv,
                 ha = 'left'
                 if gene.orientation == 1:  # Lagging
                     ha = 'right'
-                ax.text(x=0.92*x0, y=0.92*y0, s=gene_name, rotation=orient_angle,
-                        ha=ha, va='bottom', rotation_mode='anchor', fontsize=15)
+                ax.text(x=0.915*x0, y=0.915*y0, s=gene_name, rotation=orient_angle,
+                        ha=ha, va='bottom', rotation_mode='anchor', fontsize=text_size)
             else:  # Bottom part
                 ha = 'right'
                 if gene.orientation == 1:  # Lagging
                     ha = 'left'
-                ax.text(x=0.935*x0, y=0.935*y0, s=gene_name, rotation=orient_angle+180,
-                        ha=ha, va='top', rotation_mode='anchor', fontsize=15)
+                ax.text(x=0.93*x0, y=0.93*y0, s=gene_name, rotation=orient_angle+180,
+                        ha=ha, va='top', rotation_mode='anchor', fontsize=text_size)
 
 
     ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
@@ -302,15 +304,10 @@ def plot_genome_and_tsc(indiv,
         cbar_ax = fig.add_axes(pos_rect, frameon=False)
         cbar_ax.set_axis_off()
 
-        cbar = fig.colorbar(mesh,
-            ax=cbar_ax,
-            pad=0.0,
-            location='left'
-            )
-
-        cbar.set_label('$\sigma_{TSC}$', fontsize=20)
+        cbar = fig.colorbar(mesh, ax=cbar_ax, pad=0.0, location='left')
+        cbar.set_label('$\sigma_{TSC}$', fontsize=30)
         cbar.ax.invert_yaxis()
-        cbar.ax.tick_params(labelsize=15)
+        cbar.ax.tick_params(labelsize=text_size)
 
     ## Legend: gene types and interaction distance
 
@@ -333,7 +330,7 @@ def plot_genome_and_tsc(indiv,
     if draw_legend:
         ax.legend(handles=patches, title='Gene type', loc='center', ncol=ncol,
                   handletextpad=0.6, #columnspacing=1.0,
-                  title_fontsize=15, fontsize=15)
+                  title_fontsize=text_size, fontsize=text_size)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
     if draw_legend:
@@ -343,7 +340,7 @@ def plot_genome_and_tsc(indiv,
     ax.plot([-line_len, line_len], [line_y, line_y],
              color='black',
              linewidth=1)
-    ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=15)
+    ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=text_size)
 
     ## Wrapping up
     if plot_name:
