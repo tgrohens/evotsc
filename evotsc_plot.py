@@ -151,6 +151,7 @@ def plot_genome_and_tsc(indiv,
                         coloring_type='type',
                         use_letters=False,
                         print_ids=False,
+                        mid_gene_id=False,
                         id_interval=5,
                         plot_name=None):
 
@@ -246,21 +247,34 @@ def plot_genome_and_tsc(indiv,
 
         ## Print gene ID
         if print_ids and (i_gene % id_interval == 0):
+
+            if mid_gene_id:
+                x_id = np.sin(mid_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
+                y_id = np.cos(mid_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
+                top_coef = 0.91
+                bot_coef = 0.92
+            else:
+                x_id = x0
+                y_id = y0
+                top_coef = 0.915
+                bot_coef = 0.93
+
             if use_letters:
                 gene_name = letters[i_gene]
             else:
                 gene_name = i_gene
+
             if orient_angle < 120 or orient_angle > 240:  # Top part
                 ha = 'left'
-                if gene.orientation == 1:  # Lagging
+                if gene.orientation == 1 and (not mid_gene_id):  # Lagging
                     ha = 'right'
-                ax.text(x=0.915*x0, y=0.915*y0, s=gene_name, rotation=orient_angle,
+                ax.text(x=top_coef*x_id, y=top_coef*y_id, s=gene_name, rotation=orient_angle,
                         ha=ha, va='bottom', rotation_mode='anchor', fontsize=text_size)
             else:  # Bottom part
                 ha = 'right'
-                if gene.orientation == 1:  # Lagging
+                if gene.orientation == 1 and (not mid_gene_id):  # Lagging
                     ha = 'left'
-                ax.text(x=0.93*x0, y=0.93*y0, s=gene_name, rotation=orient_angle+180,
+                ax.text(x=bot_coef*x_id, y=bot_coef*y_id, s=gene_name, rotation=orient_angle+180,
                         ha=ha, va='top', rotation_mode='anchor', fontsize=text_size)
 
 
