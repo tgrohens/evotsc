@@ -15,17 +15,17 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
     # Plot only environment A
     (temporal_expr, _), fitness = indiv.evaluate(sigma_env, sigma_env)
 
-    nb_genes, nb_steps = temporal_expr.shape
+    nb_genes = indiv.nb_genes
 
     colors = mpl.cm.get_cmap('viridis', nb_genes)(range(nb_genes))
 
-    plt.figure(figsize=(9, 8), dpi=dpi)
+    plt.figure(figsize=(9, 4), dpi=dpi)
 
     plt.ylim(-0.05, 1.05)
 
     for gene in range(nb_genes):
         linestyle = ['solid', 'dashed'][indiv.genes[gene].orientation]
-        plt.plot(temporal_expr[indiv.genes[gene].id, :],
+        plt.plot(temporal_expr[:, indiv.genes[gene].id],
                  linestyle=linestyle,
                  color=colors[indiv.genes[gene].id],
                  label=f'Gene {indiv.genes[gene].id}')
