@@ -95,28 +95,6 @@ def print_params(output_dir, seed, neutral):
         params_file.write(f'save_step: {save_step}\n')
 
 
-def read_params(rep_dir):
-
-    with open(rep_dir.joinpath('params.txt'), 'r') as params_file:
-        param_lines = params_file.readlines()
-
-    params = {}
-    for line in param_lines:
-        param_name = line.split(':')[0]
-        if param_name == 'commit':
-            param_val = line.split(':')[1].strip()
-        elif param_name == 'neutral':
-            param_val = (line.split(':')[1] == True)
-        elif param_name == 'selection_method':
-            param_val = line.split(':')[1].strip()
-        else:
-            param_val = float(line.split(':')[1])
-
-        params[param_name] = param_val
-
-    return params
-
-
 def save_pop(output_dir, pop, gen):
     # At this stage, we have a new non-evaluated population, so let's
     # evaluate everyone to have consistent save files
