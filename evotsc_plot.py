@@ -155,6 +155,7 @@ def plot_genome_and_tsc(indiv,
                         print_ids=False,
                         mid_gene_id=False,
                         id_interval=5,
+                        show_plot=True, # Disable interactive plotting if we're making a lot of plots
                         plot_name=None):
 
     # Argument sanity checks
@@ -378,6 +379,7 @@ def plot_genome_and_tsc(indiv,
     if plot_name:
         plt.savefig(plot_name, dpi=300, bbox_inches='tight')
 
-    plt.show()
+    if show_plot:
+        plt.show()
 
     plt.close()
