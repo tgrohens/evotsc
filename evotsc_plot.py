@@ -38,6 +38,7 @@ def plot_expr(indiv, sigma_env, plot_title, plot_name):
     plt.title(plot_title + f' fitness: {fitness:.5}')
 
     plt.savefig(plot_name, dpi=300, bbox_inches='tight')
+    plt.show()
 
     plt.close()
 
@@ -149,12 +150,21 @@ def plot_genome_and_tsc(indiv,
                         sigma,
                         shift=None, # shift everything by `shift` bp: the position at shift bp is on top
                         show_bar=False,
-                        coloring_type='type',
-                        use_letters=False,
+                        coloring_type='type', # 'type', 'on-off', 'by-id'
+                        naming_type='pos', # 'pos', 'alpha', 'id'
                         print_ids=False,
                         mid_gene_id=False,
                         id_interval=5,
                         plot_name=None):
+
+    # Argument sanity checks
+    if coloring_type not in ['type', 'on-off', 'by-id']:
+        raise ValueError(f'Unknown coloring type "{coloring_type}"')
+
+    if naming_type not in ['pos', 'alpha', 'id']:
+        raise ValueError(f'Unknown naming type "{naming_type}"')
+    if naming_type == 'alpha' and indiv.nb_genes > 26:
+        raise ValueError(f'Trying to plot with letters on an individual with too many genes ({indiv.nb_genes})')
 
     # Compute gene positions and activation levels
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
@@ -191,13 +201,11 @@ def plot_genome_and_tsc(indiv,
         #                   AB: blue   A:  red    B: green
         gene_type_color = [[colors[1], colors[7], colors[5]],  # light: off
                            [colors[0], colors[6], colors[4]]]  # normal: on
-    else:
+    elif coloring_type == 'by-id':
         gene_colors = mpl.cm.get_cmap('viridis', indiv.nb_genes)(range(indiv.nb_genes))
     gene_types = ['AB', 'A', 'B']
 
-    if use_letters:
-        if indiv.nb_genes > 26:
-            raise ValueError('Trying to plot with letters on an individual with too many genes')
+    if naming_type == 'alpha':
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
     for i_gene, gene in enumerate(indiv.genes):
@@ -264,10 +272,12 @@ def plot_genome_and_tsc(indiv,
                 top_coef = 0.915
                 bot_coef = 0.93
 
-            if use_letters:
+            if naming_type == 'alpha':
                 gene_name = letters[i_gene]
-            else:
+            elif naming_type == 'pos':
                 gene_name = i_gene
+            elif naming_type == 'id':
+                gene_name = gene.id
 
             if orient_angle < 120 or orient_angle > 240:  # Top part
                 ha = 'left'
@@ -322,7 +332,7 @@ def plot_genome_and_tsc(indiv,
     # Color bar for the SC level
     if show_bar:
         height = 0.83
-        #          [left,  bottom,    width,  height]
+        #          [left,  bottom,     width, height]
         pos_rect = [-0.15, (1 - height)/2, 1, height]
         cbar_ax = fig.add_axes(pos_rect, frameon=False)
         cbar_ax.set_axis_off()
@@ -333,7 +343,6 @@ def plot_genome_and_tsc(indiv,
         cbar.ax.tick_params(labelsize=text_size)
 
     ## Legend: gene types and interaction distance
-
     if coloring_type == 'type':
         draw_legend = True
         patches = ([mpl.patches.Patch(facecolor=color, edgecolor='black', label=label)
@@ -347,7 +356,7 @@ def plot_genome_and_tsc(indiv,
                    [mpl.patches.Patch(facecolor=color, edgecolor='black', label=label + ' (off)')
                     for color, label in zip(gene_type_color[0], gene_types)])
         ncol = 2
-    else:
+    elif coloring_type == 'by-id':
         draw_legend = False
 
     if draw_legend:
