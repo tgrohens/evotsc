@@ -147,6 +147,7 @@ def explain(indiv, sigma_A, sigma_B):
 
 def plot_genome_and_tsc(indiv,
                         sigma,
+                        shift=None, # shift everything by `shift` bp: the position at shift bp is on top
                         show_bar=False,
                         coloring_type='type',
                         use_letters=False,
@@ -157,6 +158,10 @@ def plot_genome_and_tsc(indiv,
 
     # Compute gene positions and activation levels
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
+
+    if shift is not None:
+        for i_gene in range(indiv.nb_genes):
+            gene_pos[i_gene] = (gene_pos[i_gene] - shift) % genome_length
 
     # Boolean array, True if a gene's final expression level is > half the max
     if indiv.inter_matrix is None:
@@ -292,7 +297,11 @@ def plot_genome_and_tsc(indiv,
     radius = np.linspace(.6, .72, 2)
 
     #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
-    positions = np.linspace(0, genome_length, n, dtype=int)
+    if shift is None:
+        positions = np.linspace(0, genome_length, n, dtype=int)
+    else:
+        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
+
     data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
 
     min_sc = -0.15
