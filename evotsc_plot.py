@@ -146,26 +146,26 @@ def explain(indiv, sigma_A, sigma_B):
     print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
 
 
-def plot_genome_and_tsc(indiv,
-                        sigma,
-                        shift=None, # shift everything by `shift` bp: the position at shift bp is on top
-                        show_bar=False,
-                        coloring_type='type', # 'type', 'on-off', 'by-id'
-                        naming_type='pos', # 'pos', 'alpha', 'id'
-                        print_ids=False,
-                        mid_gene_id=False,
-                        id_interval=5,
-                        show_plot=True, # Disable interactive plotting if we're making a lot of plots
-                        plot_name=None):
+def _plot_gene_ring(fig,
+                    indiv,
+                    sigma,
+                    shift,
+                    coloring_type,
+                    naming_type,
+                    print_ids,
+                    mid_gene_id,
+                    id_interval,
+                    text_size):
 
-    # Argument sanity checks
-    if coloring_type not in ['type', 'on-off', 'by-id']:
-        raise ValueError(f'Unknown coloring type "{coloring_type}"')
+    pos_rect = [0, 0, 1, 1]
+    ax = fig.add_axes(pos_rect)
 
-    if naming_type not in ['pos', 'alpha', 'id']:
-        raise ValueError(f'Unknown naming type "{naming_type}"')
-    if naming_type == 'alpha' and indiv.nb_genes > 26:
-        raise ValueError(f'Trying to plot with letters on an individual with too many genes ({indiv.nb_genes})')
+    ax.set_xlim(-1.2, 1.2)
+    ax.set_ylim(-1.2, 1.2)
+    ax.set_aspect('equal')
+    circle = plt.Circle(xy=(0, 0), radius=1, linestyle='-', fill=False)
+    ax.add_patch(circle)
+    ax.set_axis_off()
 
     # Compute gene positions and activation levels
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
@@ -179,22 +179,9 @@ def plot_genome_and_tsc(indiv,
         indiv.inter_matrix = indiv.compute_inter_matrix()
     activated_genes = indiv.run_system(sigma)[-1, :] > (1 + np.exp(- indiv.m)) / 2
 
-    # Plot
-    pos_rect = [0, 0, 1, 1]
-    fig = plt.figure(figsize=(9,9), dpi=dpi)
-    ax = fig.add_axes(pos_rect)
-
-    ax.set_xlim(-1.2, 1.2)
-    ax.set_ylim(-1.2, 1.2)
-    ax.set_aspect('equal')
-    circle = plt.Circle(xy=(0, 0), radius=1, linestyle='-', fill=False)
-    ax.add_patch(circle)
-    ax.set_axis_off()
-
-    text_size = 18
 
     ## Plot the genes themselves
-
+    gene_types = ['AB', 'A', 'B']
     if coloring_type == 'type':
         gene_type_color = ['tab:blue', 'tab:red', 'tab:green']
     elif coloring_type == 'on-off':
@@ -204,7 +191,6 @@ def plot_genome_and_tsc(indiv,
                            [colors[0], colors[6], colors[4]]]  # normal: on
     elif coloring_type == 'by-id':
         gene_colors = mpl.cm.get_cmap('viridis', indiv.nb_genes)(range(indiv.nb_genes))
-    gene_types = ['AB', 'A', 'B']
 
     if naming_type == 'alpha':
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -293,56 +279,6 @@ def plot_genome_and_tsc(indiv,
                 ax.text(x=bot_coef*x_id, y=bot_coef*y_id, s=gene_name, rotation=orient_angle+180,
                         ha=ha, va='top', rotation_mode='anchor', fontsize=text_size)
 
-
-    ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
-    sc_ax = fig.add_axes(pos_rect, projection='polar', frameon=False)
-    sc_ax.set_ylim(0, 1)
-
-    n = 1000  # the number of data points
-
-    # theta values (see
-    # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
-    # To have the crisp version: put n+1 in theta and [data] as the 3rd argument of pcolormesh()
-    # To have the blurry version: put n in theta and [data, data] ----------------------------
-    theta = np.linspace(0, 2 * np.pi, n)
-    radius = np.linspace(.6, .72, 2)
-
-    #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
-    if shift is None:
-        positions = np.linspace(0, genome_length, n, dtype=int)
-    else:
-        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
-
-    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
-
-    min_sc = -0.15
-    max_sc = 0.15
-    norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
-
-    if np.min(data) < min_sc or np.max(data) > max_sc:
-        print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
-
-    mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
-                            norm=norm, cmap=plt.get_cmap('seismic'))
-    sc_ax.set_yticklabels([])
-    sc_ax.set_xticklabels([])
-    #sc_ax.spines['polar'].set_visible(False)
-    sc_ax.set_theta_zero_location('N')
-    sc_ax.set_theta_direction('clockwise')
-
-    # Color bar for the SC level
-    if show_bar:
-        height = 0.83
-        #          [left,  bottom,     width, height]
-        pos_rect = [-0.15, (1 - height)/2, 1, height]
-        cbar_ax = fig.add_axes(pos_rect, frameon=False)
-        cbar_ax.set_axis_off()
-
-        cbar = fig.colorbar(mesh, ax=cbar_ax, pad=0.0, location='left')
-        cbar.set_label('$\sigma_{TSC}$', fontsize=30)
-        cbar.ax.invert_yaxis()
-        cbar.ax.tick_params(labelsize=text_size)
-
     ## Legend: gene types and interaction distance
     if coloring_type == 'type':
         draw_legend = True
@@ -374,6 +310,97 @@ def plot_genome_and_tsc(indiv,
              color='black',
              linewidth=1)
     ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=text_size)
+
+
+def _plot_supercoiling_ring(fig,
+                            indiv,
+                            sigma,
+                            shift,
+                            show_bar,
+                            text_size):
+
+    ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
+    sc_rect = [0, 0, 1, 1]
+    sc_ax = fig.add_axes(sc_rect, projection='polar', frameon=False)
+    sc_ax.set_ylim(0, 1)
+
+    n = 1000  # the number of data points
+
+    # theta values (see
+    # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
+    # To have the crisp version: put n+1 in theta and [data] as the 3rd argument of pcolormesh()
+    # To have the blurry version: put n in theta and [data, data] ----------------------------
+    theta = np.linspace(0, 2 * np.pi, n)
+    radius = np.linspace(.6, .72, 2)
+
+    #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
+    _, genome_length = indiv.compute_gene_positions(include_coding=True)
+
+    if shift is None:
+        positions = np.linspace(0, genome_length, n, dtype=int)
+    else:
+        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
+
+    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
+
+    min_sc = -0.15
+    max_sc = 0.15
+    norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
+
+    if np.min(data) < min_sc or np.max(data) > max_sc:
+        print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
+
+    mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
+                            norm=norm, cmap=plt.get_cmap('seismic'))
+    sc_ax.set_yticklabels([])
+    sc_ax.set_xticklabels([])
+    #sc_ax.spines['polar'].set_visible(False)
+    sc_ax.set_theta_zero_location('N')
+    sc_ax.set_theta_direction('clockwise')
+
+    # Color bar for the SC level
+    if show_bar:
+        height = 0.83
+        #          [left,  bottom,     width, height]
+        cbar_rect = [-0.15, (1 - height)/2, 1, height]
+        cbar_ax = fig.add_axes(cbar_rect, frameon=False)
+        cbar_ax.set_axis_off()
+
+        cbar = fig.colorbar(mesh, ax=cbar_ax, pad=0.0, location='left')
+        cbar.set_label('$\sigma_{TSC}$', fontsize=30)
+        cbar.ax.invert_yaxis()
+        cbar.ax.tick_params(labelsize=text_size)
+
+
+def plot_genome_and_tsc(indiv,
+                        sigma,
+                        shift=None, # shift everything by `shift` bp: the position at shift bp is on top
+                        show_bar=False,
+                        coloring_type='type', # 'type', 'on-off', 'by-id'
+                        naming_type='pos', # 'pos', 'alpha', 'id'
+                        print_ids=False,
+                        mid_gene_id=False,
+                        id_interval=5,
+                        show_plot=True, # Disable interactive plotting if we're making a lot of plots
+                        plot_name=None):
+
+    # Argument sanity checks
+    if coloring_type not in ['type', 'on-off', 'by-id']:
+        raise ValueError(f'Unknown coloring type "{coloring_type}"')
+
+    if naming_type not in ['pos', 'alpha', 'id']:
+        raise ValueError(f'Unknown naming type "{naming_type}"')
+    if naming_type == 'alpha' and indiv.nb_genes > 26:
+        raise ValueError(f'Trying to plot with letters on an individual with too many genes ({indiv.nb_genes})')
+
+    text_size = 18
+
+    # Plot
+    fig = plt.figure(figsize=(9,9), dpi=dpi)
+
+    _plot_gene_ring(fig, indiv, sigma, shift, coloring_type, naming_type, print_ids, mid_gene_id, id_interval, text_size)
+
+    _plot_supercoiling_ring(fig, indiv, sigma, shift, show_bar, text_size)
 
     ## Wrapping up
     if plot_name:
