@@ -313,9 +313,7 @@ def _plot_gene_ring(fig,
 
 
 def _plot_supercoiling_ring(fig,
-                            indiv,
-                            sigma,
-                            shift,
+                            data,
                             show_bar,
                             text_size):
 
@@ -324,31 +322,19 @@ def _plot_supercoiling_ring(fig,
     sc_ax = fig.add_axes(sc_rect, projection='polar', frameon=False)
     sc_ax.set_ylim(0, 1)
 
-    n = 1000  # the number of data points
-
-    # theta values (see
-    # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
-    # To have the crisp version: put n+1 in theta and [data] as the 3rd argument of pcolormesh()
-    # To have the blurry version: put n in theta and [data, data] ----------------------------
-    theta = np.linspace(0, 2 * np.pi, n)
-    radius = np.linspace(.6, .72, 2)
-
-    #data = np.array([theta[:-1]]) #np.array([np.random.random(n) * 2 * np.pi])
-    _, genome_length = indiv.compute_gene_positions(include_coding=True)
-
-    if shift is None:
-        positions = np.linspace(0, genome_length, n, dtype=int)
-    else:
-        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
-
-    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
-
     min_sc = -0.15
     max_sc = 0.15
     norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
 
     if np.min(data) < min_sc or np.max(data) > max_sc:
         print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
+
+    # theta values (see
+    # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
+    # To have the crisp version: put len(data)+1 in theta and [data] as the 3rd argument of pcolormesh()
+    # To have the blurry version: put len(data) in theta and [data, data] ----------------------------
+    theta = np.linspace(0, 2 * np.pi, len(data))
+    radius = np.linspace(.6, .72, 2)
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
                             norm=norm, cmap=plt.get_cmap('seismic'))
@@ -395,12 +381,26 @@ def plot_genome_and_tsc(indiv,
 
     text_size = 18
 
-    # Plot
+    ## Plot
     fig = plt.figure(figsize=(9,9), dpi=dpi)
 
+    # Plot the genes
     _plot_gene_ring(fig, indiv, sigma, shift, coloring_type, naming_type, print_ids, mid_gene_id, id_interval, text_size)
 
-    _plot_supercoiling_ring(fig, indiv, sigma, shift, show_bar, text_size)
+    # Compute the local supercoiling level
+    n = 1000  # the number of data points
+
+    _, genome_length = indiv.compute_gene_positions(include_coding=True)
+
+    if shift is None:
+        positions = np.linspace(0, genome_length, n, dtype=int)
+    else:
+        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
+
+    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
+
+    # Plot the local supercoiling level
+    _plot_supercoiling_ring(fig, data, show_bar, text_size)
 
     ## Wrapping up
     if plot_name:
