@@ -314,6 +314,7 @@ def _plot_gene_ring(fig,
 
 def _plot_supercoiling_ring(fig,
                             data,
+                            shift_rad,
                             show_bar,
                             text_size):
 
@@ -333,7 +334,7 @@ def _plot_supercoiling_ring(fig,
     # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
     # To have the crisp version: put len(data)+1 in theta and [data] as the 3rd argument of pcolormesh()
     # To have the blurry version: put len(data) in theta and [data, data] ----------------------------
-    theta = np.linspace(0, 2 * np.pi, len(data))
+    theta = np.linspace(0, 2 * np.pi, len(data)) - shift_rad
     radius = np.linspace(.6, .72, 2)
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
@@ -360,7 +361,8 @@ def _plot_supercoiling_ring(fig,
 
 def plot_genome_and_tsc(indiv,
                         sigma,
-                        shift=None, # shift everything by `shift` bp: the position at shift bp is on top
+                        shift=None, # Shift everything by `shift` bp: the position at shift bp is on top
+                        ring_data=None, # Optionally replace TSC data with user-provided data
                         show_bar=False,
                         coloring_type='type', # 'type', 'on-off', 'by-id'
                         naming_type='pos', # 'pos', 'alpha', 'id'
@@ -387,20 +389,22 @@ def plot_genome_and_tsc(indiv,
     # Plot the genes
     _plot_gene_ring(fig, indiv, sigma, shift, coloring_type, naming_type, print_ids, mid_gene_id, id_interval, text_size)
 
-    # Compute the local supercoiling level
-    n = 1000  # the number of data points
-
     _, genome_length = indiv.compute_gene_positions(include_coding=True)
-
-    if shift is None:
-        positions = np.linspace(0, genome_length, n, dtype=int)
+    if ring_data is None:
+        # Compute the local supercoiling level
+        n = 1000  # the number of data points
+        data_positions = np.linspace(0, genome_length, n, dtype=int)
+        data = indiv.compute_final_sc_at(sigma, data_positions) - sigma - indiv.sigma_basal
     else:
-        positions = np.linspace(shift, genome_length + shift, n, dtype=int) % genome_length
+        # Reuse user data
+        data = ring_data
 
-    data = indiv.compute_final_sc_at(sigma, positions) - sigma - indiv.sigma_basal
-
-    # Plot the local supercoiling level
-    _plot_supercoiling_ring(fig, data, show_bar, text_size)
+    # Convert the shift from bp to rad
+    if shift is not None:
+        shift_rad = shift * 2 * np.pi / genome_length
+    else:
+        shift_rad = 0
+    _plot_supercoiling_ring(fig, data, shift_rad, show_bar, text_size)
 
     ## Wrapping up
     if plot_name:
