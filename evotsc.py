@@ -152,6 +152,10 @@ class Individual:
             expr_A, expr_B = self.expr_levels
             new_indiv.expr_levels = np.copy(expr_A), np.copy(expr_B)
             new_indiv.fitness = self.fitness
+        else:
+            self.inter_matrix = None
+            self.expr_levels = None
+            self.fitness = None
 
         return new_indiv
 
