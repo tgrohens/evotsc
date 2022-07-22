@@ -155,6 +155,7 @@ def _plot_gene_ring(fig,
                     print_ids,
                     mid_gene_id,
                     id_interval,
+                    id_ko,
                     text_size):
 
     pos_rect = [0, 0, 1, 1]
@@ -218,6 +219,9 @@ def _plot_gene_ring(fig,
             gene_color = gene_type_color[activated_genes[i_gene]][gene.gene_type]
         else:
             gene_color = gene_colors[i_gene]
+
+        if id_ko is not None and i_gene == id_ko: # Override colors and set KO gene to white
+            gene_color = 'white'
 
         rect = plt.Rectangle(xy=(x0, y0),
                              width=rect_width,
@@ -367,6 +371,7 @@ def plot_genome_and_tsc(indiv,
                         print_ids=False,
                         mid_gene_id=False,
                         id_interval=5,
+                        id_ko=None, # special plotting for KO genes
                         show_plot=True, # Disable interactive plotting if we're making a lot of plots
                         plot_name=None):
 
@@ -385,7 +390,17 @@ def plot_genome_and_tsc(indiv,
     fig = plt.figure(figsize=(9,9), dpi=dpi)
 
     # Plot the genes
-    _plot_gene_ring(fig, indiv, sigma, shift, coloring_type, naming_type, print_ids, mid_gene_id, id_interval, text_size)
+    _plot_gene_ring(fig=fig,
+                    indiv=indiv,
+                    sigma=sigma,
+                    shift=shift,
+                    coloring_type=coloring_type,
+                    naming_type=naming_type,
+                    print_ids=print_ids,
+                    mid_gene_id=mid_gene_id,
+                    id_interval=id_interval,
+                    id_ko=id_ko,
+                    text_size=text_size)
 
     _, genome_length = indiv.compute_gene_positions(include_coding=True)
     if ring_data is None:
@@ -399,7 +414,11 @@ def plot_genome_and_tsc(indiv,
 
     # Convert the shift from bp to rad
     shift_rad = shift * 2 * np.pi / genome_length
-    _plot_supercoiling_ring(fig, data, shift_rad, show_bar, text_size)
+    _plot_supercoiling_ring(fig=fig,
+                            data=data,
+                            shift_rad=shift_rad,
+                            show_bar=show_bar,
+                            text_size=text_size)
 
     ## Wrapping up
     if plot_name:
