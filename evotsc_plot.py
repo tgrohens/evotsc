@@ -318,6 +318,7 @@ def _plot_supercoiling_ring(fig,
                             data,
                             shift_rad,
                             show_bar,
+                            bar_text,
                             text_size):
 
     ## Plot local supercoiling along the genome, at the end of the individual's lifecycle
@@ -356,7 +357,9 @@ def _plot_supercoiling_ring(fig,
         cbar_ax.set_axis_off()
 
         cbar = fig.colorbar(mesh, ax=cbar_ax, pad=0.0, location='left')
-        cbar.set_label('$\sigma_{TSC}$', fontsize=30)
+        if bar_text is None:
+            bar_text = '$\sigma_{TSC}$'
+        cbar.set_label(bar_text, fontsize=30)
         cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=text_size)
 
@@ -366,6 +369,7 @@ def plot_genome_and_tsc(indiv,
                         shift=0, # Shift everything by `shift` bp: the position at shift bp is on top
                         ring_data=None, # Optionally replace TSC data with user-provided data
                         show_bar=False,
+                        bar_text=None, # Legend for the ring data color bar
                         coloring_type='type', # 'type', 'on-off', 'by-id'
                         naming_type='pos', # 'pos', 'alpha', 'id'
                         print_ids=False,
@@ -418,6 +422,7 @@ def plot_genome_and_tsc(indiv,
                             data=data,
                             shift_rad=shift_rad,
                             show_bar=show_bar,
+                            bar_text=bar_text,
                             text_size=text_size)
 
     ## Wrapping up
