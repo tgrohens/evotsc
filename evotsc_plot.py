@@ -170,9 +170,7 @@ def _plot_gene_ring(fig,
     # Compute gene positions and activation levels
     gene_pos, genome_length = indiv.compute_gene_positions(include_coding=True)
 
-    if shift is not None:
-        for i_gene in range(indiv.nb_genes):
-            gene_pos[i_gene] = (gene_pos[i_gene] - shift) % genome_length
+    gene_pos = (gene_pos - shift) % genome_length
 
     # Boolean array, True if a gene's final expression level is > half the max
     if indiv.inter_matrix is None:
@@ -361,7 +359,7 @@ def _plot_supercoiling_ring(fig,
 
 def plot_genome_and_tsc(indiv,
                         sigma,
-                        shift=None, # Shift everything by `shift` bp: the position at shift bp is on top
+                        shift=0, # Shift everything by `shift` bp: the position at shift bp is on top
                         ring_data=None, # Optionally replace TSC data with user-provided data
                         show_bar=False,
                         coloring_type='type', # 'type', 'on-off', 'by-id'
@@ -400,10 +398,7 @@ def plot_genome_and_tsc(indiv,
         data = ring_data
 
     # Convert the shift from bp to rad
-    if shift is not None:
-        shift_rad = shift * 2 * np.pi / genome_length
-    else:
-        shift_rad = 0
+    shift_rad = shift * 2 * np.pi / genome_length
     _plot_supercoiling_ring(fig, data, shift_rad, show_bar, text_size)
 
     ## Wrapping up
