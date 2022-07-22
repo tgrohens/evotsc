@@ -316,6 +316,7 @@ def _plot_gene_ring(fig,
 
 def _plot_supercoiling_ring(fig,
                             data,
+                            ring_color_type,
                             shift_rad,
                             show_bar,
                             bar_text,
@@ -326,12 +327,23 @@ def _plot_supercoiling_ring(fig,
     sc_ax = fig.add_axes(sc_rect, projection='polar', frameon=False)
     sc_ax.set_ylim(0, 1)
 
-    min_sc = -0.15
-    max_sc = 0.15
-    norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
+    if ring_color_type == 'tsc':
+        cmap = 'seismic'
+        min_sc = -0.15
+        max_sc = 0.15
+        norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
 
-    if np.min(data) < min_sc or np.max(data) > max_sc:
-        print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
+        if np.min(data) < min_sc or np.max(data) > max_sc:
+            print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
+
+    elif ring_color_type == 'delta':
+        cmap = 'binary'
+        min_sc = 0 # Only absolute values are passed
+        max_sc = 0.10
+        norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
+
+        if np.min(data) < min_sc or np.max(data) > max_sc:
+            print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
 
     # theta values (see
     # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
@@ -341,7 +353,7 @@ def _plot_supercoiling_ring(fig,
     radius = np.linspace(.6, .72, 2)
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
-                            norm=norm, cmap=plt.get_cmap('seismic'))
+                            norm=norm, cmap=plt.get_cmap(cmap))
     sc_ax.set_yticklabels([])
     sc_ax.set_xticklabels([])
     #sc_ax.spines['polar'].set_visible(False)
@@ -360,7 +372,8 @@ def _plot_supercoiling_ring(fig,
         if bar_text is None:
             bar_text = '$\sigma_{TSC}$'
         cbar.set_label(bar_text, fontsize=30)
-        cbar.ax.invert_yaxis()
+        if ring_color_type == 'tsc':
+            cbar.ax.invert_yaxis()
         cbar.ax.tick_params(labelsize=text_size)
 
 
@@ -368,6 +381,7 @@ def plot_genome_and_tsc(indiv,
                         sigma,
                         shift=0, # Shift everything by `shift` bp: the position at shift bp is on top
                         ring_data=None, # Optionally replace TSC data with user-provided data
+                        ring_color_type='tsc', # 'tsc': default, 'delta': black-and-white colors
                         show_bar=False,
                         bar_text=None, # Legend for the ring data color bar
                         coloring_type='type', # 'type', 'on-off', 'by-id'
@@ -420,6 +434,7 @@ def plot_genome_and_tsc(indiv,
     shift_rad = shift * 2 * np.pi / genome_length
     _plot_supercoiling_ring(fig=fig,
                             data=data,
+                            ring_color_type=ring_color_type,
                             shift_rad=shift_rad,
                             show_bar=show_bar,
                             bar_text=bar_text,
