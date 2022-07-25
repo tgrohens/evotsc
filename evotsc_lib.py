@@ -1,5 +1,7 @@
 import pickle
 
+import evotsc
+
 def read_params(rep_dir):
 
     with open(rep_dir.joinpath('params.txt'), 'r') as params_file:
@@ -43,3 +45,39 @@ def get_best_indiv(rep_path, gen):
         pass
 
     return best_indiv
+
+def make_random_indiv(intergene,
+                      gene_length,
+                      nb_genes,
+                      default_basal_expression,
+                      interaction_dist,
+                      interaction_coef,
+                      sigma_basal,
+                      sigma_opt,
+                      epsilon,
+                      m,
+                      selection_coef,
+                      mutation,
+                      rng,
+                      nb_mutations=0):
+
+    genes = evotsc.Gene.generate(intergene=intergene,
+                                 length=gene_length,
+                                 nb_genes=nb_genes,
+                                 default_basal_expression=default_basal_expression,
+                                 rng=rng)
+
+    indiv = evotsc.Individual(genes=genes,
+                              interaction_dist=interaction_dist,
+                              interaction_coef=interaction_coef,
+                              sigma_basal=sigma_basal,
+                              sigma_opt=sigma_opt,
+                              epsilon=epsilon,
+                              m=m,
+                              selection_coef=selection_coef,
+                              rng=rng)
+
+    for i_mut in range(nb_mutations):
+        indiv.mutate(mutation)
+
+    return indiv
