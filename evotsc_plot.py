@@ -146,10 +146,57 @@ def explain(indiv, sigma_A, sigma_B):
     print(f'  B genes:     {on_genes_B[2]} on, {off_genes_B[2]} off')
 
 
+def _plot_inter_graph(ax, indiv, radius, mid_pos_rad, inter_graph):
+
+    for edge in inter_graph.edges:
+
+        i_gene = edge[0]
+        i_target = edge[1]
+
+        x_start = radius * np.sin(mid_pos_rad[i_gene])
+        y_start = radius * np.cos(mid_pos_rad[i_gene])
+        x_end = radius * np.sin(mid_pos_rad[i_target])
+        y_end = radius * np.cos(mid_pos_rad[i_target])
+
+        pos_1_minus_2 = i_gene - i_target
+        pos_2_minus_1 = - pos_1_minus_2
+
+        # We want to know whether gene 1 comes before or after gene 2
+        # Before: -------1--2-------- or -2---------------1-
+        # After:  -------2--1-------- or -1---------------2-
+        if pos_1_minus_2 < 0: # -------1--2-------- ou -1---------------2-
+            if pos_2_minus_1 < indiv.nb_genes + pos_1_minus_2: # -------1--2--------
+                i_before_j = True
+            else: # -1---------------2-
+                i_before_j = False
+
+        else: # -------2--1-------- ou -2---------------1-
+            if pos_1_minus_2 < indiv.nb_genes + pos_2_minus_1: # -------2--1--------
+                i_before_j = False
+            else:
+                i_before_j = True
+
+        if i_before_j:
+            connectionstyle='arc3,rad=0.1'
+        else:
+            connectionstyle='arc3,rad=-0.1'
+
+        if inter_graph[i_gene][i_target]['kind'] == 'activ':
+            color = 'tab:green'
+        else:
+            color = 'tab:red'
+
+        arrow = mpl.patches.FancyArrowPatch((x_start, y_start), (x_end, y_end),
+                                            connectionstyle=connectionstyle,
+                                            arrowstyle='-|>', color=color, mutation_scale=15)
+        ax.add_patch(arrow)
+
+
 def _plot_gene_ring(fig,
                     indiv,
                     sigma,
                     shift,
+                    inter_graph,
                     coloring_type,
                     naming_type,
                     print_ids,
@@ -179,7 +226,7 @@ def _plot_gene_ring(fig,
     activated_genes = indiv.run_system(sigma)[-1, :] > (1 + np.exp(- indiv.m)) / 2
 
 
-    ## Plot the genes themselves
+    ## Constants
     gene_types = ['AB', 'A', 'B']
     if coloring_type == 'type':
         gene_type_color = ['tab:blue', 'tab:red', 'tab:green']
@@ -194,24 +241,32 @@ def _plot_gene_ring(fig,
     if naming_type == 'alpha':
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
+    rect_height = 0.1
+
+    ## Compute the angles of the boundaries of each gene
+    orient_angle = np.zeros((indiv.nb_genes))
+    start_pos_rad = np.zeros((indiv.nb_genes))
+    mid_pos_rad = np.zeros((indiv.nb_genes))
+    end_pos_rad = np.zeros((indiv.nb_genes))
+
     for i_gene, gene in enumerate(indiv.genes):
-        ## Compute the angles of the boundaries of the gene
         start_pos_deg = 360 * gene_pos[i_gene] / genome_length
         if gene.orientation == 0:  # Leading
             end_pos_deg = 360 * (gene_pos[i_gene] + gene.length - 1) / genome_length
         else:
             end_pos_deg = 360 * (gene_pos[i_gene] - (gene.length - 1)) / genome_length
-        orient_angle = 360 - (start_pos_deg + end_pos_deg) / 2
-        start_pos_rad = np.radians(start_pos_deg)
-        end_pos_rad = np.radians(end_pos_deg)
-        mid_pos_rad = (start_pos_rad + end_pos_rad) / 2
+        orient_angle[i_gene] = 360 - (start_pos_deg + end_pos_deg) / 2
+        start_pos_rad[i_gene] = np.radians(start_pos_deg)
+        end_pos_rad[i_gene] = np.radians(end_pos_deg)
+        mid_pos_rad[i_gene] = (start_pos_rad[i_gene] + end_pos_rad[i_gene]) / 2
+
+    for i_gene, gene in enumerate(indiv.genes):
 
         ## Plot the gene rectangle
-        rect_width = 2 * np.sin((end_pos_rad - start_pos_rad) / 2.0)
-        rect_height = 0.1
+        rect_width = 2 * np.sin((end_pos_rad[i_gene] - start_pos_rad[i_gene]) / 2.0)
 
-        x0 = np.sin(start_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
-        y0 = np.cos(start_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
+        x0 = np.sin(start_pos_rad[i_gene]) - 0.5 * rect_height * np.sin(mid_pos_rad[i_gene])
+        y0 = np.cos(start_pos_rad[i_gene]) - 0.5 * rect_height * np.cos(mid_pos_rad[i_gene])
 
         if coloring_type == 'type':
             gene_color = gene_type_color[gene.gene_type]
@@ -226,7 +281,7 @@ def _plot_gene_ring(fig,
         rect = plt.Rectangle(xy=(x0, y0),
                              width=rect_width,
                              height=rect_height,
-                             angle=orient_angle, #in degrees anti-clockwise about xy.
+                             angle=orient_angle[i_gene], #in degrees anti-clockwise about xy.
                              facecolor=gene_color,
                              edgecolor='black',
                              label=f'Gene {i_gene}')
@@ -236,14 +291,16 @@ def _plot_gene_ring(fig,
         ## Plot the orientation bar and arrow
 
         # Bar
-        x_lin = np.sin(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.sin(mid_pos_rad)
-        y_lin = np.cos(start_pos_rad) + np.array([0.5, 1.0]) * rect_height * np.cos(mid_pos_rad)
+        x_lin = (np.sin(start_pos_rad[i_gene]) +
+                 np.array([0.5, 1.0]) * rect_height * np.sin(mid_pos_rad[i_gene]))
+        y_lin = (np.cos(start_pos_rad[i_gene]) +
+                 np.array([0.5, 1.0]) * rect_height * np.cos(mid_pos_rad[i_gene]))
 
         ax.plot(x_lin, y_lin, color='black', linewidth=1)
 
         # Arrow
-        dx_arr = rect_width * np.cos(mid_pos_rad) / 3.0
-        dy_arr = - rect_width * np.sin(mid_pos_rad) / 3.0
+        dx_arr = rect_width * np.cos(mid_pos_rad[i_gene]) / 3.0
+        dy_arr = - rect_width * np.sin(mid_pos_rad[i_gene]) / 3.0
 
         ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
@@ -251,8 +308,8 @@ def _plot_gene_ring(fig,
         if print_ids and (i_gene % id_interval == 0):
 
             if mid_gene_id:
-                x_id = np.sin(mid_pos_rad) - 0.5 * rect_height * np.sin(mid_pos_rad)
-                y_id = np.cos(mid_pos_rad) - 0.5 * rect_height * np.cos(mid_pos_rad)
+                x_id = np.sin(mid_pos_rad[i_gene]) - 0.5 * rect_height * np.sin(mid_pos_rad[i_gene])
+                y_id = np.cos(mid_pos_rad[i_gene]) - 0.5 * rect_height * np.cos(mid_pos_rad[i_gene])
                 top_coef = 0.91
                 bot_coef = 0.92
             else:
@@ -268,18 +325,23 @@ def _plot_gene_ring(fig,
             elif naming_type == 'id':
                 gene_name = gene.id
 
-            if orient_angle < 120 or orient_angle > 240:  # Top part
+            if orient_angle[i_gene] < 120 or orient_angle[i_gene] > 240:  # Top part
                 ha = 'left'
                 if gene.orientation == 1 and (not mid_gene_id):  # Lagging
                     ha = 'right'
-                ax.text(x=top_coef*x_id, y=top_coef*y_id, s=gene_name, rotation=orient_angle,
+                ax.text(x=top_coef*x_id, y=top_coef*y_id, s=gene_name, rotation=orient_angle[i_gene],
                         ha=ha, va='bottom', rotation_mode='anchor', fontsize=text_size)
             else:  # Bottom part
                 ha = 'right'
                 if gene.orientation == 1 and (not mid_gene_id):  # Lagging
                     ha = 'left'
-                ax.text(x=bot_coef*x_id, y=bot_coef*y_id, s=gene_name, rotation=orient_angle+180,
+                ax.text(x=bot_coef*x_id, y=bot_coef*y_id, s=gene_name, rotation=orient_angle[i_gene]+180,
                         ha=ha, va='top', rotation_mode='anchor', fontsize=text_size)
+
+    ## Interaction graph
+    if inter_graph is not None:
+        radius = 0.75 - 0.5 * rect_height
+        _plot_inter_graph(ax, indiv, radius, mid_pos_rad, inter_graph)
 
     ## Legend: gene types and interaction distance
     if coloring_type == 'type':
@@ -300,7 +362,7 @@ def _plot_gene_ring(fig,
 
     if draw_legend:
         ax.legend(handles=patches, title='Gene type', loc='center', ncol=ncol,
-                  handletextpad=0.6, #columnspacing=1.0,
+                  handletextpad=0.6,
                   title_fontsize=text_size, fontsize=text_size)
 
     line_len = np.pi*indiv.interaction_dist/genome_length
@@ -312,7 +374,6 @@ def _plot_gene_ring(fig,
              color='black',
              linewidth=1)
     ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=text_size)
-
 
 def _plot_supercoiling_ring(fig,
                             data,
@@ -384,6 +445,7 @@ def plot_genome_and_tsc(indiv,
                         ring_color_type='tsc', # 'tsc': default, 'delta': black-and-white colors
                         show_bar=False,
                         bar_text=None, # Legend for the ring data color bar
+                        inter_graph=None, # Plot an interaction graph inside
                         coloring_type='type', # 'type', 'on-off', 'by-id'
                         naming_type='pos', # 'pos', 'alpha', 'id'
                         print_ids=False,
@@ -412,6 +474,7 @@ def plot_genome_and_tsc(indiv,
                     indiv=indiv,
                     sigma=sigma,
                     shift=shift,
+                    inter_graph=inter_graph,
                     coloring_type=coloring_type,
                     naming_type=naming_type,
                     print_ids=print_ids,
