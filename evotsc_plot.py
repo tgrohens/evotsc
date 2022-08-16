@@ -392,19 +392,19 @@ def _plot_supercoiling_ring(fig,
         cmap = 'seismic'
         min_sc = -0.15
         max_sc = 0.15
-        norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
-
-        if np.min(data) < min_sc or np.max(data) > max_sc:
-            print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
 
     elif ring_color_type == 'delta':
-        cmap = 'binary'
+        # Use one of the white -> color colormaps from matplotlib, but make it start from pure white
+        cmap_values = plt.get_cmap('Oranges')(np.linspace(0, 1, 50))
+        cmap = mpl.colors.LinearSegmentedColormap.from_list(name='my_cmap', colors=['white', *cmap_values])
+
         min_sc = 0 # Only absolute values are passed
         max_sc = 0.10
-        norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
 
-        if np.min(data) < min_sc or np.max(data) > max_sc:
-            print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
+    norm = mpl.colors.Normalize(min_sc, max_sc) # Extremum values for the SC level
+
+    if np.min(data) < min_sc or np.max(data) > max_sc:
+        print(f'SC values out of bounds! min {np.min(data)}, max {np.max(data)}', file=sys.stderr)
 
     # theta values (see
     # https://matplotlib.org/devdocs/gallery/images_contours_and_fields/pcolormesh_grids.html)
@@ -442,7 +442,7 @@ def plot_genome_and_tsc(indiv,
                         sigma,
                         shift=0, # Shift everything by `shift` bp: the position at shift bp is on top
                         ring_data=None, # Optionally replace TSC data with user-provided data
-                        ring_color_type='tsc', # 'tsc': default, 'delta': black-and-white colors
+                        ring_color_type='tsc', # 'tsc': red-white-blue, 'delta': white-orange
                         show_bar=False,
                         bar_text=None, # Legend for the ring data color bar
                         inter_graph=None, # Plot an interaction graph inside
