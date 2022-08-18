@@ -199,6 +199,7 @@ def _plot_gene_ring(fig,
                     inter_graph,
                     coloring_type,
                     naming_type,
+                    hatched_genes,
                     print_ids,
                     mid_gene_id,
                     id_interval,
@@ -278,12 +279,17 @@ def _plot_gene_ring(fig,
         if id_ko is not None and i_gene == id_ko: # Override colors and set KO gene to white
             gene_color = 'white'
 
+        hatch = None
+        if (hatched_genes is not None) and hatched_genes[i_gene] and (i_gene != id_ko):
+            hatch = '..'
+
         rect = plt.Rectangle(xy=(x0, y0),
                              width=rect_width,
                              height=rect_height,
                              angle=orient_angle[i_gene], #in degrees anti-clockwise about xy.
                              facecolor=gene_color,
                              edgecolor='black',
+                             hatch=hatch,
                              label=f'Gene {i_gene}')
 
         ax.add_patch(rect)
@@ -305,7 +311,7 @@ def _plot_gene_ring(fig,
         ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
 
         ## Print gene ID
-        if print_ids and (i_gene % id_interval == 0):
+        if print_ids and ((i_gene % id_interval == 0) or (i_gene == id_ko)):
 
             if mid_gene_id:
                 x_id = np.sin(mid_pos_rad[i_gene]) - 0.5 * rect_height * np.sin(mid_pos_rad[i_gene])
@@ -448,6 +454,7 @@ def plot_genome_and_tsc(indiv,
                         inter_graph=None, # Plot an interaction graph inside
                         coloring_type='type', # 'type', 'on-off', 'by-id'
                         naming_type='pos', # 'pos', 'alpha', 'id'
+                        hatched_genes=None, # Highlight some genes
                         print_ids=False,
                         mid_gene_id=False,
                         id_interval=5,
@@ -477,6 +484,7 @@ def plot_genome_and_tsc(indiv,
                     inter_graph=inter_graph,
                     coloring_type=coloring_type,
                     naming_type=naming_type,
+                    hatched_genes=hatched_genes,
                     print_ids=print_ids,
                     mid_gene_id=mid_gene_id,
                     id_interval=id_interval,
