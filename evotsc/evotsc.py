@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-import evotsc_core
+from . import core as evotsc_core
 
 # Class that holds all the mutation parameters
 class Mutation:

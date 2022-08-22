@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-
 label_fontsize=20
 tick_fontsize=15
 legend_fontsize=15

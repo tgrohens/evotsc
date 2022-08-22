@@ -1,6 +1,6 @@
 import pickle
 
-import evotsc
+from . import evotsc
 
 def read_params(rep_dir):
 

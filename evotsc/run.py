@@ -7,7 +7,7 @@ import subprocess
 
 import numpy as np
 
-import evotsc
+from . import evotsc
 
 ## Constants
 # Population
@@ -251,7 +251,3 @@ def main():
 
             if gen % save_step == 0:
                 save_pop(output_dir, population, gen)
-
-
-if __name__ == "__main__":
-    main()
