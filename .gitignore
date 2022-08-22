@@ -3,6 +3,7 @@
 .python-version
 __pycache__
 EvoTSC.egg-info
+build
 
 # Debug
 Sandbox.ipynb
