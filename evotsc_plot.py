@@ -204,6 +204,7 @@ def _plot_gene_ring(fig,
                     mid_gene_id,
                     id_interval,
                     id_ko,
+                    id_central,
                     text_size):
 
     pos_rect = [0, 0, 1, 1]
@@ -276,12 +277,18 @@ def _plot_gene_ring(fig,
         else:
             gene_color = gene_colors[i_gene]
 
-        if id_ko is not None and i_gene == id_ko: # Override colors and set KO gene to white
+        if i_gene == id_ko: # Override colors and set KO gene to white
             gene_color = 'white'
 
         hatch = None
         if (hatched_genes is not None) and hatched_genes[i_gene] and (i_gene != id_ko):
             hatch = '..'
+
+        linewidth = 1
+        zorder = 1
+        if i_gene == id_central or i_gene == id_ko:
+            linewidth = 2.5
+            zorder = 10
 
         rect = plt.Rectangle(xy=(x0, y0),
                              width=rect_width,
@@ -289,7 +296,9 @@ def _plot_gene_ring(fig,
                              angle=orient_angle[i_gene], #in degrees anti-clockwise about xy.
                              facecolor=gene_color,
                              edgecolor='black',
+                             linewidth=linewidth,
                              hatch=hatch,
+                             zorder=zorder,
                              label=f'Gene {i_gene}')
 
         ax.add_patch(rect)
@@ -302,16 +311,19 @@ def _plot_gene_ring(fig,
         y_lin = (np.cos(start_pos_rad[i_gene]) +
                  np.array([0.5, 1.0]) * rect_height * np.cos(mid_pos_rad[i_gene]))
 
-        ax.plot(x_lin, y_lin, color='black', linewidth=1)
+        ax.plot(x_lin, y_lin, color='black', linewidth=linewidth)
 
         # Arrow
         dx_arr = rect_width * np.cos(mid_pos_rad[i_gene]) / 3.0
         dy_arr = - rect_width * np.sin(mid_pos_rad[i_gene]) / 3.0
 
-        ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr, head_width=0.02, color='black')
+        ax.arrow(x_lin[1], y_lin[1], dx_arr, dy_arr,
+                 linewidth=linewidth, head_width=0.02, color='black')
 
         ## Print gene ID
-        if print_ids and ((i_gene % id_interval == 0) or (i_gene == id_ko)):
+        if print_ids and ((id_central is None and i_gene % id_interval == 0) or
+                          (id_central is not None and i_gene % id_central == 0) or
+                          (i_gene == id_ko)):
 
             if mid_gene_id:
                 x_id = np.sin(mid_pos_rad[i_gene]) - 0.5 * rect_height * np.sin(mid_pos_rad[i_gene])
@@ -459,6 +471,7 @@ def plot_genome_and_tsc(indiv,
                         mid_gene_id=False,
                         id_interval=5,
                         id_ko=None, # special plotting for KO genes
+                        id_central=None, # special plotting for subnetworks
                         show_plot=True, # Disable interactive plotting if we're making a lot of plots
                         plot_name=None):
 
@@ -489,6 +502,7 @@ def plot_genome_and_tsc(indiv,
                     mid_gene_id=mid_gene_id,
                     id_interval=id_interval,
                     id_ko=id_ko,
+                    id_central=id_central,
                     text_size=text_size)
 
     _, genome_length = indiv.compute_gene_positions(include_coding=True)
