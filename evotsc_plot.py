@@ -282,12 +282,12 @@ def _plot_gene_ring(fig,
 
         hatch = None
         if (hatched_genes is not None) and hatched_genes[i_gene] and (i_gene != id_ko):
-            hatch = '..'
+            hatch = '...'
 
         linewidth = 1
         zorder = 1
         if i_gene == id_central or i_gene == id_ko:
-            linewidth = 2.5
+            linewidth = 3.5
             zorder = 10
 
         rect = plt.Rectangle(xy=(x0, y0),
