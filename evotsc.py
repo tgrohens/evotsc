@@ -273,14 +273,17 @@ class Individual:
 
             # Try genes until we find one where we can perform the indel
             found_gene = False
+            tries_left = 100
 
-            while not found_gene:
+            while (not found_gene) and (tries_left > 0):
                 i_gene = self.rng.integers(self.nb_genes)
                 if self.genes[i_gene].intergene + intergene_delta > 0:
                     self.genes[i_gene].intergene += intergene_delta
                     found_gene = True
+                else:
+                    tries_left -= 1
 
-            did_mutate = True
+            did_mutate = found_gene
 
         return did_mutate
 
