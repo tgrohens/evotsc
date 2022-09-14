@@ -111,8 +111,10 @@ def load_pop(pop_path):
 def write_stats(stats_file, indiv, avg_fit, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
     stats_file.write(f'{gen},{indiv.fitness},{avg_fit},'
-                    f'{on_genes_A[0]},{off_genes_A[0]},{on_genes_A[1]},{off_genes_A[1]},{on_genes_A[2]},{off_genes_A[2]},'
-                    f'{on_genes_B[0]},{off_genes_B[0]},{on_genes_B[1]},{off_genes_B[1]},{on_genes_B[2]},{off_genes_B[2]}\n')
+                     f'{on_genes_A[0]},{on_genes_A[1]},{on_genes_A[2]},'
+                     f'{on_genes_B[0]},{on_genes_B[1]},{on_genes_B[2]},')
+
+    stats_file.write('\n')
     stats_file.flush()
 
 
@@ -191,8 +193,9 @@ def main():
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
-            stats_file.write('Gen,Fitness,Avg Fit,ABon_A,ABoff_A,Aon_A,Aoff_A,Bon_A,Boff_A,'
-                                        'ABon_B,ABoff_B,Aon_B,Aoff_B,Bon_B,Boff_B\n')
+            stats_file.write('Gen,Fitness,Avg Fit,ABon_A,Aon_A,Bon_A,'
+                             'ABon_B,Aon_B,Bon_B')
+            stats_file.write('\n')
 
             save_pop(output_dir, population, 0)
             write_stats(stats_file, init_indiv, init_indiv.fitness, 0)
