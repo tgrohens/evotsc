@@ -8,6 +8,7 @@ import subprocess
 import numpy as np
 
 import evotsc
+import evotsc_lib
 
 ## Constants
 # Population
@@ -123,6 +124,40 @@ def write_stats(stats_file, indiv, avg_fit, gen):
     stats_file.flush()
 
 
+def get_init_indiv(init_indiv_arg, rng):
+    init_indiv = None
+
+    if init_indiv_arg is None:  # Generate a random individual
+        init_genes = evotsc.Gene.generate(intergene=intergene,
+                                        length=gene_length,
+                                        nb_genes=nb_genes,
+                                        default_basal_expression=default_basal_expression,
+                                        rng=rng)
+
+        init_indiv = evotsc.Individual(genes=init_genes,
+                                       interaction_dist=interaction_dist,
+                                       interaction_coef=interaction_coef,
+                                       sigma_basal=sigma_basal,
+                                       sigma_opt=sigma_opt,
+                                       epsilon=epsilon,
+                                       m=m,
+                                       selection_coef=selection_coef,
+                                       rng=rng)
+
+    else:  # Load an individual
+        init_indiv_path = pathlib.Path(init_indiv_arg)
+        with open(init_indiv_path, 'rb') as indiv_file:
+            init_indiv = pickle.load(indiv_file)
+
+        # Reset the individual and give it a fresh RNG
+        init_indiv.inter_matrix = None
+        init_indiv.expr_levels = None
+        init_indiv.fitness = None
+        init_indiv.already_evaluated = False
+        init_indiv.rng = rng
+
+    return init_indiv
+
 def main():
 
     # Parse CLI arguments
@@ -135,11 +170,14 @@ def main():
                             help='run without selection')
     arg_parser.add_argument('-s', '--seed', type=int,
                             help='seed for the RNG')
+    arg_parser.add_argument('-i', '--init-indiv',
+                            help='start from a pickled individual')
+    arg_parser.add_argument('--shuffle', action='store_true',
+                            help='whether to shuffle the initial individual')
     args = arg_parser.parse_args()
 
     nb_generations = int(args.generations)
     output_dir = pathlib.Path(args.output_dir)
-
 
     first_start = True
     start_gen = 0
@@ -162,22 +200,13 @@ def main():
         print_params(output_dir, seed, args.neutral)
 
         # Setup the initial individual and population
-        init_genes = evotsc.Gene.generate(intergene=intergene,
-                                          length=gene_length,
-                                          nb_genes=nb_genes,
-                                          default_basal_expression=default_basal_expression,
-                                          rng=rng)
+        init_indiv = get_init_indiv(args.init_indiv, rng)
 
+        # If the initial individual is random, this just reshuffles it a bit
+        if args.shuffle:
+            genes_to_shuffle = nb_genes // 2  # By default
+            init_indiv = evotsc_lib.shuffle_indiv(init_indiv, genes_to_shuffle, rng)
 
-        init_indiv = evotsc.Individual(genes=init_genes,
-                                       interaction_dist=interaction_dist,
-                                       interaction_coef=interaction_coef,
-                                       sigma_basal=sigma_basal,
-                                       sigma_opt=sigma_opt,
-                                       epsilon=epsilon,
-                                       m=m,
-                                       selection_coef=selection_coef,
-                                       rng=rng)
         # Evaluate the initial individual before creating the clonal population
         init_indiv.evaluate(sigma_A, sigma_B)
 
