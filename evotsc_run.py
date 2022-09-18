@@ -112,7 +112,12 @@ def write_stats(stats_file, indiv, avg_fit, gen):
     on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
     stats_file.write(f'{gen},{indiv.fitness},{avg_fit},'
                      f'{on_genes_A[0]},{on_genes_A[1]},{on_genes_A[2]},'
-                     f'{on_genes_B[0]},{on_genes_B[1]},{on_genes_B[2]},')
+                     f'{on_genes_B[0]},{on_genes_B[1]},{on_genes_B[2]}')
+    if intergene_poisson_lam != 0.0:
+        _, genome_size = indiv.compute_gene_positions(include_coding=True)
+        stats_file.write(f',{genome_size}')
+    if basal_sc_mutation_prob != 0.0:
+        stats_file.write(f',{indiv.sigma_basal}')
 
     stats_file.write('\n')
     stats_file.flush()
@@ -195,6 +200,10 @@ def main():
             stats_file = open(f'{output_dir}/stats.csv', 'w')
             stats_file.write('Gen,Fitness,Avg Fit,ABon_A,Aon_A,Bon_A,'
                              'ABon_B,Aon_B,Bon_B')
+            if intergene_poisson_lam != 0.0:
+                stats_file.write(',Genome size')
+            if basal_sc_mutation_prob != 0.0:
+                stats_file.write(',Basal SC')
             stats_file.write('\n')
 
             save_pop(output_dir, population, 0)

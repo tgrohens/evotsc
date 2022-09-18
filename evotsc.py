@@ -8,16 +8,16 @@ import evotsc_core
 # Class that holds all the mutation parameters
 class Mutation:
     def __init__(self,
+                 inversion_poisson_lam: float = 0.0,
                  intergene_poisson_lam: float = 0.0,
                  intergene_mutation_var: float = 0.0,
                  basal_sc_mutation_prob: float = 0.0,
-                 basal_sc_mutation_var: float = 0.0,
-                 inversion_poisson_lam: float = 0.0) -> None:
+                 basal_sc_mutation_var: float = 0.0) -> None:
+        self.inversion_poisson_lam = inversion_poisson_lam
         self.intergene_poisson_lam = intergene_poisson_lam
         self.intergene_mutation_var = intergene_mutation_var
         self.basal_sc_mutation_prob = basal_sc_mutation_prob
         self.basal_sc_mutation_var = basal_sc_mutation_var
-        self.inversion_poisson_lam = inversion_poisson_lam
 
 
 class Gene:
