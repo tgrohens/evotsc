@@ -99,7 +99,7 @@ def save_pop(output_dir, pop, gen):
     # At this stage, we have a new non-evaluated population, so let's
     # evaluate everyone to have consistent save files
     pop.evaluate()
-    with open(f'{output_dir}/pop_gen_{gen:06}.evotsc', 'wb') as save_file:
+    with open(f'{output_dir}/pop_gen_{gen:07}.evotsc', 'wb') as save_file:
         pickle.dump(pop, save_file)
 
 
