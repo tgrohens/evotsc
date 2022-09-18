@@ -211,6 +211,10 @@ def main():
 
     else:
         save_files = [f for f in output_dir.iterdir() if 'pop_gen' in f.name]
+
+        if len(save_files) == 0:
+            raise FileNotFoundError('No save files found: corrupted directory?.')
+
         last_save_path = sorted(save_files)[-1]
         start_gen = int(re.search(r'\d+', last_save_path.name).group(0))
         population = load_pop(last_save_path)
