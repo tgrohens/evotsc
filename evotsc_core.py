@@ -138,13 +138,12 @@ def compute_fitness_numba(nb_genes: int,
                           expr_level: np.ndarray,
                           gene_targets: np.ndarray,
                           selection_coef: float) -> float:
-    # We compute the gap g, which is the distance to the optimal phenotype:
-    # (gene expression - expected expression) ^ 2
+    # We compute the gap g, which is the mean distance to the optimal phenotype:
+    # sum ((gene expression - expected expression) ^ 2) / nb_genes
     # The fitness f is then given by: f = exp(- k g) where k is the
     # selection coefficient.
 
-
-    gap = np.square(expr_level - gene_targets).sum()
+    gap = np.square(expr_level - gene_targets).sum() / nb_genes
 
     fitness = np.exp(- selection_coef * gap)
 

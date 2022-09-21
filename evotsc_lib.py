@@ -69,6 +69,7 @@ def make_random_indiv(intergene,
     genes = evotsc.Gene.generate(intergene=intergene,
                                  length=gene_length,
                                  nb_genes=nb_genes,
+                                 min_target_expression=np.exp(-m),
                                  default_basal_expression=default_basal_expression,
                                  rng=rng)
 

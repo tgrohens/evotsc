@@ -27,7 +27,7 @@ m = 2.5
 default_basal_expression = (1 + np.exp(- m)) / 2 # Average of the maximum and minimum expression levels in the model
 
 # Fitness
-selection_coef = 50
+selection_coef = 250
 
 # Selection
 selection_method = "fit-prop" # Choices: "fit-prop", "rank", "exp-rank"
