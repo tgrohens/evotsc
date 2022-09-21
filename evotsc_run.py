@@ -33,8 +33,7 @@ selection_coef = 50
 selection_method = "fit-prop" # Choices: "fit-prop", "rank", "exp-rank"
 
 # Environment
-sigma_A = 0.01
-sigma_B = -0.01
+sigma_env = 0
 
 # Mutations
 inversion_poisson_lam = 2.0
@@ -84,8 +83,7 @@ def print_params(output_dir, seed, neutral):
         # Selection
         params_file.write(f'selection_method: {selection_method}\n')
         # Environment
-        params_file.write(f'sigma_A: {sigma_A}\n')
-        params_file.write(f'sigma_B: {sigma_B}\n')
+        params_file.write(f'sigma_env: {sigma_env}\n')
         # Mutations
         params_file.write(f'inversion_poisson_lam: {inversion_poisson_lam}\n')
         params_file.write(f'intergene_poisson_lam: {intergene_poisson_lam}\n')
@@ -110,13 +108,13 @@ def load_pop(pop_path):
 
 
 def write_stats(stats_file, indiv, avg_fit, gen):
-    on_genes_A, off_genes_A, on_genes_B, off_genes_B = indiv.summarize(sigma_A, sigma_B)
-    stats_file.write(f'{gen},{indiv.fitness},{avg_fit},'
-                     f'{on_genes_A[0]},{on_genes_A[1]},{on_genes_A[2]},'
-                     f'{on_genes_B[0]},{on_genes_B[1]},{on_genes_B[2]}')
+
+    stats_file.write(f'{gen},{indiv.fitness},{avg_fit}')
+
     if intergene_poisson_lam != 0.0:
         _, genome_size = indiv.compute_gene_positions(include_coding=True)
         stats_file.write(f',{genome_size}')
+
     if basal_sc_mutation_prob != 0.0:
         stats_file.write(f',{indiv.sigma_basal}')
 
@@ -129,10 +127,11 @@ def get_init_indiv(init_indiv_arg, rng):
 
     if init_indiv_arg is None:  # Generate a random individual
         init_genes = evotsc.Gene.generate(intergene=intergene,
-                                        length=gene_length,
-                                        nb_genes=nb_genes,
-                                        default_basal_expression=default_basal_expression,
-                                        rng=rng)
+                                          length=gene_length,
+                                          nb_genes=nb_genes,
+                                          min_target_expression=np.exp(-m),
+                                          default_basal_expression=default_basal_expression,
+                                          rng=rng)
 
         init_indiv = evotsc.Individual(genes=init_genes,
                                        interaction_dist=interaction_dist,
@@ -208,8 +207,7 @@ def main():
             init_indiv = evotsc_lib.shuffle_indiv(init_indiv, genes_to_shuffle, rng)
 
         # Evaluate the initial individual before creating the clonal population
-        init_indiv.evaluate(sigma_A, sigma_B)
-
+        init_indiv.evaluate(sigma_env)
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
@@ -220,15 +218,13 @@ def main():
         population = evotsc.Population(init_indiv=init_indiv,
                                        nb_indivs=nb_indivs,
                                        mutation=mutation,
-                                       sigma_A=sigma_A,
-                                       sigma_B=sigma_B,
+                                       sigma_env=sigma_env,
                                        selection_method=selection_method,
                                        rng=rng)
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
-            stats_file.write('Gen,Fitness,Avg Fit,ABon_A,Aon_A,Bon_A,'
-                             'ABon_B,Aon_B,Bon_B')
+            stats_file.write('Gen,Fitness,Avg Fit')
             if intergene_poisson_lam != 0.0:
                 stats_file.write(',Genome size')
             if basal_sc_mutation_prob != 0.0:

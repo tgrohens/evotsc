@@ -26,13 +26,13 @@ class Gene:
                  orientation: int,
                  length: int,
                  basal_expression: float,
-                 gene_type: int,
+                 expr_target: float,
                  id: int) -> None:
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.length = length                      # Length of the gene
         self.basal_expression = basal_expression  # Initial expression level
-        self.gene_type = gene_type                # Should the gene be active in env. A, B, or both
+        self.expr_target = expr_target            # Targeted expression level
         self.id = id                              # Track genes through inversions
 
     def __repr__(self) -> str:
@@ -40,7 +40,7 @@ class Gene:
                 f'length: {self.length}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
-                f'type: {["AB", " A", " B"][self.gene_type]}, '
+                f'target: {self.expr_target:.3}, '
                 f'expr: {self.basal_expression:.3}')
 
     # Generate a list of random genes
@@ -49,6 +49,7 @@ class Gene:
                  intergene: int,
                  length: int,
                  nb_genes: int,
+                 min_target_expression: float,  # Depends on `m`
                  default_basal_expression: float = None,
                  rng: np.random.Generator = None) -> 'Gene':
 
@@ -56,14 +57,6 @@ class Gene:
             rng = np.random.default_rng()
 
         genes = []
-
-        # Randomly assign 1/3 of genes to type A, B, and AB respectively
-        nb_genes_A = nb_genes // 3
-        nb_genes_B = nb_genes // 3
-        nb_genes_AB = nb_genes - (nb_genes_A + nb_genes_B)
-
-        gene_types = [0] * nb_genes_AB + [1] * nb_genes_A + [2] * nb_genes_B
-        gene_types = rng.permutation(gene_types)
 
         for i_gene in range(nb_genes):
             if default_basal_expression is None:
@@ -73,11 +66,14 @@ class Gene:
                 basal_expression = rng.random()
             else:
                 basal_expression = default_basal_expression
+
+            expr_target = rng.random() * (1 - min_target_expression) + min_target_expression
+
             new_gene = cls(intergene=intergene,
                            orientation=rng.integers(2),
                            length=length,
                            basal_expression=basal_expression,
-                           gene_type=gene_types[i_gene],
+                           expr_target=expr_target,
                            id=i_gene)
             genes.append(new_gene)
 
@@ -89,7 +85,7 @@ class Gene:
                     orientation=self.orientation,
                     length=self.length,
                     basal_expression=self.basal_expression,
-                    gene_type=self.gene_type,
+                    expr_target=self.expr_target,
                     id=self.id)
 
 
@@ -120,7 +116,7 @@ class Individual:
             self.rng = np.random.default_rng()
 
         self.inter_matrix = None
-        self.expr_levels = None
+        self.expr_level = None
         self.fitness = None
         self.already_evaluated = False
 
@@ -149,12 +145,11 @@ class Individual:
 
         if self.already_evaluated:
             new_indiv.inter_matrix = np.copy(self.inter_matrix)
-            expr_A, expr_B = self.expr_levels
-            new_indiv.expr_levels = np.copy(expr_A), np.copy(expr_B)
+            new_indiv.expr_level = np.copy(self.expr_level)
             new_indiv.fitness = self.fitness
         else:
             self.inter_matrix = None
-            self.expr_levels = None
+            self.expr_level = None
             self.fitness = None
 
         return new_indiv
@@ -216,27 +211,24 @@ class Individual:
 
 
     def compute_fitness(self):
-        expr_levels_A, expr_levels_B = self.expr_levels
-        gene_types = np.array([gene.gene_type for gene in self.genes])
+        gene_targets = np.array([gene.expr_target for gene in self.genes])
         return evotsc_core.compute_fitness_numba(nb_genes=self.nb_genes,
-                                                 expr_levels_A=expr_levels_A,
-                                                 expr_levels_B=expr_levels_B,
-                                                 gene_types=gene_types,
-                                                 m=self.m,
+                                                 expr_level=self.expr_level[-1, :],
+                                                 gene_targets=gene_targets,
                                                  selection_coef=self.selection_coef)
 
-    def evaluate(self, sigma_A: float, sigma_B: float) -> Tuple[np.ndarray, float]:
+    def evaluate(self, sigma_env: float) -> Tuple[np.ndarray, float]:
         if self.already_evaluated:
-            return self.expr_levels, self.fitness
+            return self.expr_level, self.fitness
 
         self.inter_matrix = self.compute_inter_matrix()
 
-        self.expr_levels = self.run_system(sigma_A), self.run_system(sigma_B)
+        self.expr_level = self.run_system(sigma_env)
         self.fitness = self.compute_fitness()
 
         self.already_evaluated = True
 
-        return self.expr_levels, self.fitness
+        return self.expr_level, self.fitness
 
     ############ Mutational operators
 
@@ -413,36 +405,6 @@ class Individual:
         return True
 
 
-    def summarize(self,
-                  sigma_A: float,
-                  sigma_B: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        (temporal_expr_A, temporal_expr_B), fitness = self.evaluate(sigma_A, sigma_B)
-
-
-        half_expr = (1 + np.exp(- self.m)) / 2
-
-        ### Environment A
-        on_genes_A = np.zeros(3, dtype=int)
-        off_genes_A = np.zeros(3, dtype=int)
-        final_expr_A = temporal_expr_A[-1, :]
-        for i_gene, gene in enumerate(self.genes):
-            if final_expr_A[i_gene] > half_expr:
-                on_genes_A[gene.gene_type] += 1
-            else:
-                off_genes_A[gene.gene_type] += 1
-
-        ### Environment B
-        on_genes_B = np.zeros(3, dtype=int)
-        off_genes_B = np.zeros(3, dtype=int)
-        final_expr_B = temporal_expr_B[-1, :]
-        for i_gene, gene in enumerate(self.genes):
-            if final_expr_B[i_gene] > half_expr:
-                on_genes_B[gene.gene_type] += 1
-            else:
-                off_genes_B[gene.gene_type] += 1
-
-        return on_genes_A, off_genes_A, on_genes_B, off_genes_B
-
     # Compute the final supercoiling level at positions `positions`
     # under external supercoiling `sigma`
     def compute_final_sc_at(self,
@@ -561,8 +523,7 @@ class Population:
                  init_indiv: Individual,
                  nb_indivs: int,
                  mutation: Mutation,
-                 sigma_A: float,
-                 sigma_B: float,
+                 sigma_env: float,
                  selection_method: str,
                  rng: np.random.Generator = None) -> None:
         # Individuals
@@ -584,13 +545,12 @@ class Population:
         self.selection_method = selection_method
 
         # Environment
-        self.sigma_A = sigma_A
-        self.sigma_B = sigma_B
+        self.sigma_env = sigma_env
 
 
     def evaluate(self) -> None:
         for indiv in self.individuals:
-            indiv.evaluate(self.sigma_A, self.sigma_B)
+            indiv.evaluate(self.sigma_env)
 
 
     def step(self) -> Tuple[Individual, float]:
@@ -653,7 +613,7 @@ class Population:
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
             new_indiv.mutate(self.mutation)
-            new_indiv.evaluate(self.sigma_A, self.sigma_B)
+            new_indiv.evaluate(self.sigma_env)
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs

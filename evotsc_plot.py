@@ -13,7 +13,7 @@ dpi=300
 def plot_expr(indiv, sigma_env, plot_title, plot_name):
 
     # Plot only environment A
-    (temporal_expr, _), fitness = indiv.evaluate(sigma_env, sigma_env)
+    temporal_expr, fitness = indiv.evaluate(sigma_env)
 
     nb_genes = indiv.nb_genes
 
@@ -274,7 +274,7 @@ def _plot_gene_ring(fig,
         elif coloring_type == 'on-off':
             gene_color = gene_type_color[activated_genes[i_gene]][gene.gene_type]
         else:
-            gene_color = gene_colors[i_gene]
+            gene_color = gene_colors[gene.id]
 
         if id_ko is not None and i_gene == id_ko: # Override colors and set KO gene to white
             gene_color = 'white'
@@ -490,6 +490,8 @@ def plot_genome_and_tsc(indiv,
                     id_interval=id_interval,
                     id_ko=id_ko,
                     text_size=text_size)
+
+    indiv = indiv.clone()
 
     _, genome_length = indiv.compute_gene_positions(include_coding=True)
     if ring_data is None:

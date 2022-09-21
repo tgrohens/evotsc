@@ -135,39 +135,17 @@ def compute_inter_matrix_numba(nb_genes: int,
 
 @jit(nopython=True)
 def compute_fitness_numba(nb_genes: int,
-                          expr_levels_A: np.ndarray,
-                          expr_levels_B: np.ndarray,
-                          gene_types: np.ndarray,
-                          m: float,
+                          expr_level: np.ndarray,
+                          gene_targets: np.ndarray,
                           selection_coef: float) -> float:
-    # We compute the gap g, which is the distance to the optimal phenotype,
-    # as the sum for each type of gene (A, B, AB) of:
-    # (mean expression of the genes of that type - expected expression) ^ 2
+    # We compute the gap g, which is the distance to the optimal phenotype:
+    # (gene expression - expected expression) ^ 2
     # The fitness f is then given by: f = exp(- k g) where k is the
     # selection coefficient.
 
-    nb_genes_per_type = nb_genes / 3
 
-    # Environment A
-    gene_expr_A = np.zeros(3)
-    for i_gene in range(nb_genes):
-        gene_expr_A[gene_types[i_gene]] += expr_levels_A[-1, i_gene]
+    gap = np.square(expr_level - gene_targets).sum()
 
-    # The minimal expression level is exp(-m)
-    target_A = np.array([1.0, 1.0, np.exp(-m)]) # Gene types are AB, A, B
-
-    gap_A = np.square(gene_expr_A / nb_genes_per_type - target_A).sum()
-
-
-    # Environment B
-    gene_expr_B = np.zeros(3)
-    for i_gene in range(nb_genes):
-        gene_expr_B[gene_types[i_gene]] += expr_levels_B[-1, i_gene]
-
-    target_B = np.array([1.0, np.exp(-m), 1.0]) # Gene types are AB, A, B
-
-    gap_B = np.square(gene_expr_B / nb_genes_per_type - target_B).sum()
-
-    fitness = np.exp(- selection_coef * (gap_A + gap_B))
+    fitness = np.exp(- selection_coef * gap)
 
     return fitness
