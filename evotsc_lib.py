@@ -27,8 +27,12 @@ def read_params(rep_dir):
 
 def get_best_indiv(rep_path, gen):
 
-    with open(rep_path.joinpath(f'pop_gen_{gen:06}.evotsc'), 'rb') as save_file:
-        pop_rep = pickle.load(save_file)
+    try:
+        with open(rep_path.joinpath(f'pop_gen_{gen:06}.evotsc'), 'rb') as save_file:
+            pop_rep = pickle.load(save_file)
+    except FileNotFoundError:  # Somewhere along we added an extra 0
+        with open(rep_path.joinpath(f'pop_gen_{gen:07}.evotsc'), 'rb') as save_file:
+            pop_rep = pickle.load(save_file)
 
     pop_rep.evaluate()
 
