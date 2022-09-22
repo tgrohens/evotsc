@@ -93,27 +93,19 @@ def shuffle_indiv(indiv, nb_genes_to_shuffle, rng):
 
     shuffled_indiv = indiv.clone()
 
-    gene_types = ['AB', 'A', 'B']
+    genes_to_shuffle = rng.permutation(np.arange(shuffled_indiv.nb_genes))[:nb_genes_to_shuffle]
 
-    shuffle_by_kind = nb_genes_to_shuffle // 3
+    min_expr = np.exp(-indiv.m)
+    max_expr = 1
 
-    genes_by_type = [[], [], []]
-    for gene in shuffled_indiv.genes:
-        genes_by_type[gene.gene_type].append(gene.id)
+    for gene_id in genes_to_shuffle:
+        gene = shuffled_indiv.genes[gene_id]
+        gene_target = gene.expr_target
+        delta = rng.normal(loc=0, scale=0.05)
+        new_target = np.min([max_expr, np.max([gene_target + delta, min_expr])])
+        gene.expr_target = new_target
 
-    shuffled_genes = []
-    for gene_type in range(len(gene_types)):
-        shuffled_genes.append(rng.permutation(genes_by_type[gene_type]))
-
-    genes_to_shuffle = np.concatenate([shuffled_genes[i][:shuffle_by_kind] for i in range(3)])
-
-    genes_to_shuffle = rng.permutation(genes_to_shuffle)
-
-    for i_gene in range(len(genes_to_shuffle)):
-        shuffled_indiv.genes[genes_to_shuffle[i_gene]].gene_type = i_gene // shuffle_by_kind
-
-    shuffled_indiv.inter_matrix = None
-    shuffled_indiv.expr_levels = None
+    shuffled_indiv.expr_level = None
     shuffled_indiv.fitness = None
     shuffled_indiv.already_evaluated = False
 
