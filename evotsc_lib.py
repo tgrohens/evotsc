@@ -100,10 +100,7 @@ def shuffle_indiv(indiv, nb_genes_to_shuffle, rng):
 
     for gene_id in genes_to_shuffle:
         gene = shuffled_indiv.genes[gene_id]
-        gene_target = gene.expr_target
-        delta = rng.normal(loc=0, scale=0.05)
-        new_target = np.min([max_expr, np.max([gene_target + delta, min_expr])])
-        gene.expr_target = new_target
+        gene.expr_target = rng.random() * (max_expr - min_expr) + min_expr
 
     shuffled_indiv.expr_level = None
     shuffled_indiv.fitness = None

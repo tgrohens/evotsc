@@ -203,7 +203,7 @@ def main():
 
         # If the initial individual is random, this just reshuffles it a bit
         if args.shuffle:
-            genes_to_shuffle = nb_genes // 2  # By default
+            genes_to_shuffle = nb_genes // 3
             init_indiv = evotsc_lib.shuffle_indiv(init_indiv, genes_to_shuffle, rng)
 
         # Evaluate the initial individual before creating the clonal population
