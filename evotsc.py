@@ -26,13 +26,15 @@ class Gene:
                  orientation: int,
                  length: int,
                  basal_expression: float,
-                 expr_target: float,
+                 expr_target_A: float,
+                 expr_target_B: float,
                  id: int) -> None:
         self.intergene = intergene                # Distance to the next gene
         self.orientation = orientation            # Leading or lagging strand
         self.length = length                      # Length of the gene
         self.basal_expression = basal_expression  # Initial expression level
-        self.expr_target = expr_target            # Targeted expression level
+        self.expr_target_A = expr_target_A        # Targeted expression levels
+        self.expr_target_B = expr_target_B
         self.id = id                              # Track genes through inversions
 
     def __repr__(self) -> str:
@@ -40,7 +42,8 @@ class Gene:
                 f'length: {self.length}, '
                 f'intergene: {self.intergene}, '
                 f'{["LEADING", "LAGGING"][self.orientation]}, '
-                f'target: {self.expr_target:.3}, '
+                f'target_A: {self.expr_target_A:.3}, '
+                f'target_B: {self.expr_target_B:.3}, '
                 f'expr: {self.basal_expression:.3}')
 
     # Generate a list of random genes
@@ -67,13 +70,15 @@ class Gene:
             else:
                 basal_expression = default_basal_expression
 
-            expr_target = rng.random() * (1 - min_target_expression) + min_target_expression
+            expr_target_A = rng.random() * (1 - min_target_expression) + min_target_expression
+            expr_target_B = rng.random() * (1 - min_target_expression) + min_target_expression
 
             new_gene = cls(intergene=intergene,
                            orientation=rng.integers(2),
                            length=length,
                            basal_expression=basal_expression,
-                           expr_target=expr_target,
+                           expr_target_A=expr_target_A,
+                           expr_target_B=expr_target_B,
                            id=i_gene)
             genes.append(new_gene)
 
@@ -85,7 +90,8 @@ class Gene:
                     orientation=self.orientation,
                     length=self.length,
                     basal_expression=self.basal_expression,
-                    expr_target=self.expr_target,
+                    expr_target_A=self.expr_target_A,
+                    expr_target_B=self.expr_target_B,
                     id=self.id)
 
 
@@ -116,7 +122,7 @@ class Individual:
             self.rng = np.random.default_rng()
 
         self.inter_matrix = None
-        self.expr_level = None
+        self.expr_levels = None
         self.fitness = None
         self.already_evaluated = False
 
@@ -145,11 +151,12 @@ class Individual:
 
         if self.already_evaluated:
             new_indiv.inter_matrix = np.copy(self.inter_matrix)
-            new_indiv.expr_level = np.copy(self.expr_level)
+            expr_A, expr_B = self.expr_levels
+            new_indiv.expr_levels = np.copy(expr_A), np.copy(expr_B)
             new_indiv.fitness = self.fitness
         else:
             self.inter_matrix = None
-            self.expr_level = None
+            self.expr_levels = None
             self.fitness = None
 
         return new_indiv
@@ -211,24 +218,26 @@ class Individual:
 
 
     def compute_fitness(self):
-        gene_targets = np.array([gene.expr_target for gene in self.genes])
+        gene_targets = (np.array([gene.expr_target_A for gene in self.genes]),
+                        np.array([gene.expr_target_B for gene in self.genes]))
+
         return evotsc_core.compute_fitness_numba(nb_genes=self.nb_genes,
-                                                 expr_level=self.expr_level[-1, :],
+                                                 expr_levels=self.expr_levels,
                                                  gene_targets=gene_targets,
                                                  selection_coef=self.selection_coef)
 
-    def evaluate(self, sigma_env: float) -> Tuple[np.ndarray, float]:
+    def evaluate(self, sigma_A: float, sigma_B: float) -> Tuple[np.ndarray, float]:
         if self.already_evaluated:
-            return self.expr_level, self.fitness
+            return self.expr_levels, self.fitness
 
         self.inter_matrix = self.compute_inter_matrix()
 
-        self.expr_level = self.run_system(sigma_env)
+        self.expr_levels = self.run_system(sigma_A), self.run_system(sigma_B)
         self.fitness = self.compute_fitness()
 
         self.already_evaluated = True
 
-        return self.expr_level, self.fitness
+        return self.expr_levels, self.fitness
 
     ############ Mutational operators
 
@@ -523,7 +532,8 @@ class Population:
                  init_indiv: Individual,
                  nb_indivs: int,
                  mutation: Mutation,
-                 sigma_env: float,
+                 sigma_A: float,
+                 sigma_B: float,
                  selection_method: str,
                  rng: np.random.Generator = None) -> None:
         # Individuals
@@ -545,12 +555,13 @@ class Population:
         self.selection_method = selection_method
 
         # Environment
-        self.sigma_env = sigma_env
+        self.sigma_A = sigma_A
+        self.sigma_B = sigma_B
 
 
     def evaluate(self) -> None:
         for indiv in self.individuals:
-            indiv.evaluate(self.sigma_env)
+            indiv.evaluate(self.sigma_A, self.sigma_B)
 
 
     def step(self) -> Tuple[Individual, float]:
@@ -613,7 +624,7 @@ class Population:
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
             new_indiv.mutate(self.mutation)
-            new_indiv.evaluate(self.sigma_env)
+            new_indiv.evaluate(self.sigma_A, self.sigma_B)
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs

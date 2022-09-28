@@ -135,16 +135,22 @@ def compute_inter_matrix_numba(nb_genes: int,
 
 @jit(nopython=True)
 def compute_fitness_numba(nb_genes: int,
-                          expr_level: np.ndarray,
+                          expr_levels: np.ndarray,
                           gene_targets: np.ndarray,
                           selection_coef: float) -> float:
-    # We compute the gap g, which is the mean distance to the optimal phenotype:
+    # For each environment, we compute the gap g, which is the mean distance
+    # to the optimal phenotype:
     # sum ((gene expression - expected expression) ^ 2) / nb_genes
     # The fitness f is then given by: f = exp(- k g) where k is the
     # selection coefficient.
 
-    gap = np.square(expr_level - gene_targets).sum() / nb_genes
+    expr_levels_A, expr_levels_B = expr_levels
+    gene_targets_A, gene_targets_B = gene_targets
 
-    fitness = np.exp(- selection_coef * gap)
+    # Measure at the last generation
+    gap_A = np.square(expr_levels_A[-1, :] - gene_targets_A).sum() / nb_genes
+    gap_B = np.square(expr_levels_B[-1, :] - gene_targets_B).sum() / nb_genes
+
+    fitness = np.exp(- selection_coef * (gap_A + gap_B))
 
     return fitness

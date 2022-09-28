@@ -33,7 +33,8 @@ selection_coef = 250
 selection_method = "fit-prop" # Choices: "fit-prop", "rank", "exp-rank"
 
 # Environment
-sigma_env = 0
+sigma_A = 0.01
+sigma_B = -0.01
 
 # Mutations
 inversion_poisson_lam = 2.0
@@ -83,7 +84,8 @@ def print_params(output_dir, seed, neutral):
         # Selection
         params_file.write(f'selection_method: {selection_method}\n')
         # Environment
-        params_file.write(f'sigma_env: {sigma_env}\n')
+        params_file.write(f'sigma_A: {sigma_A}\n')
+        params_file.write(f'sigma_B: {sigma_B}\n')
         # Mutations
         params_file.write(f'inversion_poisson_lam: {inversion_poisson_lam}\n')
         params_file.write(f'intergene_poisson_lam: {intergene_poisson_lam}\n')
@@ -207,7 +209,7 @@ def main():
             init_indiv = evotsc_lib.shuffle_indiv(init_indiv, genes_to_shuffle, rng)
 
         # Evaluate the initial individual before creating the clonal population
-        init_indiv.evaluate(sigma_env)
+        init_indiv.evaluate(sigma_A, sigma_B)
 
         mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
@@ -218,7 +220,8 @@ def main():
         population = evotsc.Population(init_indiv=init_indiv,
                                        nb_indivs=nb_indivs,
                                        mutation=mutation,
-                                       sigma_env=sigma_env,
+                                       sigma_A=sigma_A,
+                                       sigma_B=sigma_B,
                                        selection_method=selection_method,
                                        rng=rng)
 
