@@ -15,7 +15,7 @@ def run_system_numba(nb_genes: int,
                   m: float,
                   sigma_env: float) -> np.ndarray:
 
-    step_size = 0.5
+    step_size = 0.25
     stop_dist = 1e-7
     max_eval_steps = 200
 
