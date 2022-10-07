@@ -100,8 +100,8 @@ def shuffle_indiv(indiv, nb_genes_to_shuffle, rng):
     shuffle_by_kind = nb_genes_to_shuffle // 3
 
     genes_by_type = [[], [], []]
-    for gene in shuffled_indiv.genes:
-        genes_by_type[gene.gene_type].append(gene.id)
+    for i_gene, gene in enumerate(shuffled_indiv.genes):
+        genes_by_type[gene.gene_type].append(i_gene)
 
     shuffled_genes = []
     for gene_type in range(len(gene_types)):
@@ -112,7 +112,8 @@ def shuffle_indiv(indiv, nb_genes_to_shuffle, rng):
     genes_to_shuffle = rng.permutation(genes_to_shuffle)
 
     for i_gene in range(len(genes_to_shuffle)):
-        shuffled_indiv.genes[genes_to_shuffle[i_gene]].gene_type = i_gene // shuffle_by_kind
+        gene = shuffled_indiv.genes[genes_to_shuffle[i_gene]]
+        gene.gene_type = i_gene // shuffle_by_kind
 
     shuffled_indiv.inter_matrix = None
     shuffled_indiv.expr_levels = None
