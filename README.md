@@ -32,10 +32,16 @@ To reproduce a run, you can pass the seed to the program with the `-s SEED` para
 
 EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including all Python source files as well as notebooks.
 
-## ALIFE 21 paper
+## Publications
+
+### PhD manuscript
+
+The exact code used for the simulations in chapters 6 and 7 of my [PhD manuscript](https://gitlab.inria.fr/tgrohens/phd), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [phd](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/phd) branch.
+
+### ALIFE 21 paper
 
 The exact code used for the simulations in the Alife21 paper, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-model](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-model) branch.
 
-## ALIFE journal submission
+### ALIFE journal submission
 
 The exact code used for the simulations in the ALIFE journal submission, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
