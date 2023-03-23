@@ -432,7 +432,7 @@ def _plot_supercoiling_ring(fig,
     radius = np.linspace(.6, .72, 2)
 
     mesh = sc_ax.pcolormesh(theta, radius, [data, data], shading='gouraud',
-                            norm=norm, cmap=plt.get_cmap(cmap))
+                            norm=norm, cmap=plt.get_cmap(cmap, lut=2000))
     sc_ax.set_yticklabels([])
     sc_ax.set_xticklabels([])
     #sc_ax.spines['polar'].set_visible(False)
