@@ -1,4 +1,5 @@
 import pickle
+import numpy as np
 
 import evotsc
 
@@ -17,7 +18,10 @@ def read_params(rep_dir):
         elif param_name == 'selection_method':
             param_val = line.split(':')[1].strip()
         else:
-            param_val = float(line.split(':')[1])
+            if 'None' in line.split(':')[1]:
+                param_val = 0.0
+            else:
+                param_val = float(line.split(':')[1])
 
         params[param_name] = param_val
 
@@ -26,8 +30,12 @@ def read_params(rep_dir):
 
 def get_best_indiv(rep_path, gen):
 
-    with open(rep_path.joinpath(f'pop_gen_{gen:06}.evotsc'), 'rb') as save_file:
-        pop_rep = pickle.load(save_file)
+    try:
+        with open(rep_path.joinpath(f'pop_gen_{gen:06}.evotsc'), 'rb') as save_file:
+            pop_rep = pickle.load(save_file)
+    except FileNotFoundError:  # Somewhere along we added an extra 0
+        with open(rep_path.joinpath(f'pop_gen_{gen:07}.evotsc'), 'rb') as save_file:
+            pop_rep = pickle.load(save_file)
 
     pop_rep.evaluate()
 
@@ -81,3 +89,35 @@ def make_random_indiv(intergene,
         indiv.mutate(mutation)
 
     return indiv
+
+
+def shuffle_indiv(indiv, nb_genes_to_shuffle, rng):
+
+    shuffled_indiv = indiv.clone()
+
+    gene_types = ['AB', 'A', 'B']
+
+    shuffle_by_kind = nb_genes_to_shuffle // 3
+
+    genes_by_type = [[], [], []]
+    for i_gene, gene in enumerate(shuffled_indiv.genes):
+        genes_by_type[gene.gene_type].append(i_gene)
+
+    shuffled_genes = []
+    for gene_type in range(len(gene_types)):
+        shuffled_genes.append(rng.permutation(genes_by_type[gene_type]))
+
+    genes_to_shuffle = np.concatenate([shuffled_genes[i][:shuffle_by_kind] for i in range(3)])
+
+    genes_to_shuffle = rng.permutation(genes_to_shuffle)
+
+    for i_gene in range(len(genes_to_shuffle)):
+        gene = shuffled_indiv.genes[genes_to_shuffle[i_gene]]
+        gene.gene_type = i_gene // shuffle_by_kind
+
+    shuffled_indiv.inter_matrix = None
+    shuffled_indiv.expr_levels = None
+    shuffled_indiv.fitness = None
+    shuffled_indiv.already_evaluated = False
+
+    return shuffled_indiv
