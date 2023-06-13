@@ -34,9 +34,9 @@ EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including al
 
 ## Publications
 
-### PhD manuscript
+### PhD thesis
 
-The exact code used for the simulations in chapters 6 and 7 of my [PhD manuscript](https://gitlab.inria.fr/tgrohens/phd), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [phd](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/phd) branch.
+The exact code used for the simulations in chapters 6 and 7 of my [PhD thesis](https://gitlab.inria.fr/tgrohens/phd), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [phd](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/phd) branch.
 
 ### ALIFE 21 paper
 
