@@ -7,6 +7,7 @@ backcall==0.2.0
 beautifulsoup4==4.11.1
 bleach==5.0.0
 cffi==1.15.0
+colour==0.1.5
 cycler==0.11.0
 debugpy==1.6.0
 decorator==5.1.1
@@ -15,8 +16,6 @@ entrypoints==0.4
 executing==0.8.3
 fastjsonschema==2.15.3
 fonttools==4.33.3
-icc-rt==2019.0
-intel-openmp==2022.1.0
 ipykernel==6.13.0
 ipython==8.3.0
 ipython-genutils==0.2.0
