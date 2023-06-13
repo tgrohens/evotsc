@@ -16,10 +16,10 @@ The seed used for each simulation is output in the `output_folder/params.txt` fi
 
 To reproduce a run, you can pass the seed to the program with the `-s SEED` parameter.
 
-## ALIFE21 submission
+## ALIFE21 paper
 
 The exact code used for the simulations in the [Alife21 paper](https://direct.mit.edu/isal/proceedings/isal2021/33/97/102928), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-model](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-model) branch.
 
-## ALIFE journal submission
+## ALIFE journal paper
 
 The exact code used for the simulations in the [ALIFE journal paper](https://direct.mit.edu/artl/article-abstract/28/4/440/112557/A-Genome-Wide-Evolutionary-Simulation-of-the), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
