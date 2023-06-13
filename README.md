@@ -18,8 +18,8 @@ To reproduce a run, you can pass the seed to the program with the `-s SEED` para
 
 ## ALIFE21 submission
 
-The exact code used for the simulations in the Alife21 paper, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-model](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-model) branch.
+The exact code used for the simulations in the [Alife21 paper](https://direct.mit.edu/isal/proceedings/isal2021/33/97/102928), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-model](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-model) branch.
 
 ## ALIFE journal submission
 
-The exact code used for the simulations in the ALIFE journal submission, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
+The exact code used for the simulations in the [ALIFE journal paper](https://direct.mit.edu/artl/article-abstract/28/4/440/112557/A-Genome-Wide-Evolutionary-Simulation-of-the), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
