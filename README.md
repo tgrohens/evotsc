@@ -42,6 +42,6 @@ The exact code used for the simulations in chapters 6 and 7 of my [PhD thesis](h
 
 The exact code used for the simulations in the [Alife21 paper](https://direct.mit.edu/isal/proceedings/isal/33/97/102928), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-model](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-model) branch.
 
-### ALIFE journal submission
+### ALIFE journal paper
 
 The exact code used for the simulations in the [ALIFE journal paper](https://direct.mit.edu/artl/article-abstract/28/4/440/112557/A-Genome-Wide-Evolutionary-Simulation-of-the) (corresponding to Chapter 4 of my PhD manuscript), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
