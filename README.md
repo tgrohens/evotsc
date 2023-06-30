@@ -34,4 +34,4 @@ EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including al
 
 ## PCI Math Comp Biol submission
 
-This branch contains the code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) submitted to PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data.
+This branch contains the code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) undergoing peer review at PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data.
