@@ -34,9 +34,13 @@ EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including al
 
 ## Publications
 
+### PCI Math Comp Biol submission
+
+The exact code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) undergoing peer review at PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [pci](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/pci) branch.
+
 ### PhD thesis
 
-The exact code used for the simulations in chapters 6 and 7 of my [PhD thesis](https://gitlab.inria.fr/tgrohens/phd), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [phd](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/phd) branch.
+The exact code used for the simulations in Chapters 6 and 7 of my [PhD thesis](https://gitlab.inria.fr/tgrohens/phd), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [phd](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/phd) branch.
 
 ### ALIFE 21 paper
 
@@ -44,4 +48,4 @@ The exact code used for the simulations in the [Alife21 paper](https://direct.mi
 
 ### ALIFE journal paper
 
-The exact code used for the simulations in the [ALIFE journal paper](https://direct.mit.edu/artl/article-abstract/28/4/440/112557/A-Genome-Wide-Evolutionary-Simulation-of-the) (corresponding to Chapter 4 of my PhD manuscript), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
+The exact code used for the simulations in the [ALIFE journal paper](https://direct.mit.edu/artl/article-abstract/28/4/440/112557/A-Genome-Wide-Evolutionary-Simulation-of-the) (corresponding to Chapter 4 of my PhD thesis), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [alife-journal](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/alife-journal) branch.
