@@ -205,7 +205,8 @@ def _plot_gene_ring(fig,
                     id_interval,
                     id_ko,
                     id_central,
-                    text_size):
+                    text_size,
+                    env_name):
 
     pos_rect = [0, 0, 1, 1]
     ax = fig.add_axes(pos_rect)
@@ -389,9 +390,15 @@ def _plot_gene_ring(fig,
     else:
         line_y = -0.1
     ax.plot([-line_len, line_len], [line_y, line_y],
-             color='black',
-             linewidth=1)
+             color='black', linewidth=1)
     ax.text(0, line_y - 0.07, 'Gene interaction distance', ha='center', fontsize=text_size)
+
+    if env_name is not None:
+        #loc_x = 0
+        #loc_y = 0.27
+        loc_x = -0.9
+        loc_y = -1
+        ax.text(loc_x, loc_y, env_name, ha='center', fontsize=text_size+6, weight='bold')
 
 def _plot_supercoiling_ring(fig,
                             data,
@@ -463,6 +470,7 @@ def plot_genome_and_tsc(indiv,
                         ring_color_type='tsc', # 'tsc': red-white-blue, 'delta': white-orange
                         show_bar=False,
                         bar_text=None, # Legend for the ring data color bar
+                        env_name=None, # Print an environment name (Env. A / Env. B)
                         inter_graph=None, # Plot an interaction graph inside
                         coloring_type='type', # 'type', 'on-off', 'by-id'
                         naming_type='pos', # 'pos', 'alpha', 'id'
@@ -503,7 +511,8 @@ def plot_genome_and_tsc(indiv,
                     id_interval=id_interval,
                     id_ko=id_ko,
                     id_central=id_central,
-                    text_size=text_size)
+                    text_size=text_size,
+                    env_name=env_name)
 
     _, genome_length = indiv.compute_gene_positions(include_coding=True)
     if ring_data is None:
