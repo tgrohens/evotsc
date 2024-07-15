@@ -32,6 +32,6 @@ To reproduce a run, you can pass the seed to the program with the `-s SEED` para
 
 EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including all Python source files as well as notebooks.
 
-## PCI Math Comp Biol submission
+## PCI Math & Comp Biol paper
 
-This branch contains the code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) undergoing peer review at PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data.
+This branch contains the code used for the [PCI peer-reviewed paper](https://mcb.peercommunityin.org/articles/rec?id=198) (hosted on [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2)), as well as the Jupyter notebooks analyzing the resulting data.
