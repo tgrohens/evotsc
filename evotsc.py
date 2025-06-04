@@ -6,7 +6,7 @@ import numpy as np
 import evotsc_core
 
 # Class that holds all the mutation parameters
-class Mutation:
+class MutationParams:
     def __init__(self,
                  inversion_poisson_lam: float = 0.0,
                  intergene_poisson_lam: float = 0.0,
@@ -240,35 +240,35 @@ class Individual:
 
     ############ Mutational operators
 
-    def mutate(self, mutation: Mutation) -> None:
+    def mutate(self, mut_params: MutationParams) -> None:
         did_mutate = False
 
-        if self.generate_inversions(mutation):
+        if self.generate_inversions(mut_params):
             did_mutate = True
 
-        if self.mutate_basal_sc(mutation):
+        if self.mutate_basal_sc(mut_params):
             did_mutate = True
 
-        if self.mutate_intergene_distances(mutation):
+        if self.mutate_intergene_distances(mut_params):
             did_mutate = True
 
         if did_mutate:
             self.already_evaluated = False
 
 
-    def mutate_intergene_distances(self, mutation: Mutation) -> bool:
+    def mutate_intergene_distances(self, mut_params: MutationParams) -> bool:
 
         # Exit early if we don't have intergene mutations in this run
-        if mutation.intergene_poisson_lam == 0.0:
+        if mut_params.intergene_poisson_lam == 0.0:
             return False
 
         did_mutate = False
 
-        nb_mutations = self.rng.poisson(mutation.intergene_poisson_lam)
+        nb_mutations = self.rng.poisson(mut_params.intergene_poisson_lam)
 
         for i_mut in range(nb_mutations):
 
-            intergene_delta = self.rng.normal(loc=0, scale=mutation.intergene_mutation_var)
+            intergene_delta = self.rng.normal(loc=0, scale=mut_params.intergene_mutation_var)
             intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
 
             # Try genes until we find one where we can perform the indel
@@ -288,16 +288,16 @@ class Individual:
         return did_mutate
 
 
-    def mutate_basal_sc(self, mutation: Mutation) -> bool:
+    def mutate_basal_sc(self, mut_params: MutationParams) -> bool:
 
         # Exit early if we don't have SC mutations in this run
-        if mutation.basal_sc_mutation_prob == 0.0:
+        if mut_params.basal_sc_mutation_prob == 0.0:
             return False
 
         did_mutate = False
 
-        if self.rng.random() < mutation.basal_sc_mutation_prob:
-            basal_sc_delta = self.rng.normal(loc=0, scale=mutation.basal_sc_mutation_var)
+        if self.rng.random() < mut_params.basal_sc_mutation_prob:
+            basal_sc_delta = self.rng.normal(loc=0, scale=mut_params.basal_sc_mutation_var)
 
             self.sigma_basal += basal_sc_delta
 
@@ -306,10 +306,10 @@ class Individual:
         return did_mutate
 
 
-    def generate_inversions(self, mutation: Mutation) -> bool:
+    def generate_inversions(self, mut_params: MutationParams) -> bool:
         did_mutate = False
 
-        nb_inversions = self.rng.poisson(mutation.inversion_poisson_lam)
+        nb_inversions = self.rng.poisson(mut_params.inversion_poisson_lam)
 
         for inv in range(nb_inversions):
             # Here, we are only looking at intergenic distances, and do not care
@@ -560,7 +560,7 @@ class Population:
     def __init__(self,
                  init_indiv: Individual,
                  nb_indivs: int,
-                 mutation: Mutation,
+                 mut_params: MutationParams,
                  sigma_A: float,
                  sigma_B: float,
                  selection_method: str,
@@ -577,8 +577,8 @@ class Population:
         else:
             self.rng = np.random.default_rng()
 
-        # Mutation operators
-        self.mutation = mutation
+        # MutationParams operators
+        self.mut_params = mut_params
 
         # Selection
         self.selection_method = selection_method
@@ -647,18 +647,18 @@ class Population:
                                     size=self.nb_indivs,
                                     p=prob)
 
-        # Création de la nouvelle génération avec mutation et évaluation
+        # Create the new generation: generate mutations, apply them, evaluate individuals
         new_indivs = []
         for i_new_indiv in range(self.nb_indivs):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
-            new_indiv.mutate(self.mutation)
+            new_indiv.mutate(self.mut_params)
             new_indiv.evaluate(self.sigma_A, self.sigma_B)
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs
 
-        # Meilleur individu et fitness moyenne
+        # Best individual and average fitness
         new_fitnesses = np.array([indiv.fitness for indiv in new_indivs])
         best_indiv = new_indivs[np.argmax(new_fitnesses)].clone()
         avg_fit = new_fitnesses.sum() / self.nb_indivs
@@ -676,7 +676,7 @@ class Population:
         for i_new_indiv in range(self.nb_indivs):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
-            new_indiv.mutate(self.mutation)
+            new_indiv.mutate(self.mut_params)
             new_indivs.append(new_indiv)
 
         self.individuals = new_indivs

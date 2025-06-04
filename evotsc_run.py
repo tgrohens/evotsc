@@ -182,7 +182,7 @@ def main():
         init_indiv.evaluate(sigma_A, sigma_B)
 
 
-        mutation = evotsc.Mutation(basal_sc_mutation_prob=basal_sc_mutation_prob,
+        mut_params = evotsc.MutationParams(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
                                    intergene_poisson_lam=intergene_poisson_lam,
                                    intergene_mutation_var=intergene_mutation_var,
@@ -190,7 +190,7 @@ def main():
 
         population = evotsc.Population(init_indiv=init_indiv,
                                        nb_indivs=nb_indivs,
-                                       mutation=mutation,
+                                       mut_params=mut_params,
                                        sigma_A=sigma_A,
                                        sigma_B=sigma_B,
                                        selection_method=selection_method,
