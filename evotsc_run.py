@@ -176,8 +176,7 @@ def main():
                                        sigma_opt=sigma_opt,
                                        epsilon=epsilon,
                                        m=m,
-                                       selection_coef=selection_coef,
-                                       rng=rng)
+                                       selection_coef=selection_coef)
         # Evaluate the initial individual before creating the clonal population
         init_indiv.evaluate(sigma_A, sigma_B)
 

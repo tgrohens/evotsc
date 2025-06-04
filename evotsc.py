@@ -102,8 +102,7 @@ class Individual:
                  sigma_opt: float,
                  epsilon: float,
                  m: float,
-                 selection_coef: int,
-                 rng: np.random.Generator = None) -> None:
+                 selection_coef: int) -> None:
         self.genes = genes
         self.nb_genes = len(genes)
         self.interaction_dist = interaction_dist
@@ -113,12 +112,6 @@ class Individual:
         self.epsilon = epsilon
         self.m = m
         self.selection_coef = selection_coef
-
-        if rng:
-            self.rng = rng
-        else:
-            self.rng = np.random.default_rng()
-
         self.inter_matrix = None
         self.expr_levels = None
         self.fitness = None
@@ -142,8 +135,7 @@ class Individual:
                                self.sigma_opt,
                                self.epsilon,
                                self.m,
-                               self.selection_coef,
-                               self.rng)
+                               self.selection_coef)
 
         new_indiv.already_evaluated = self.already_evaluated
 
@@ -240,23 +232,23 @@ class Individual:
 
     ############ Mutational operators
 
-    def mutate(self, mut_params: MutationParams) -> None:
+    def mutate(self, rng: np.random.Generator, mut_params: MutationParams) -> None:
         did_mutate = False
 
-        if self.generate_inversions(mut_params):
+        if self.generate_inversions(rng, mut_params):
             did_mutate = True
 
-        if self.mutate_basal_sc(mut_params):
+        if self.mutate_basal_sc(rng, mut_params):
             did_mutate = True
 
-        if self.mutate_intergene_distances(mut_params):
+        if self.mutate_intergene_distances(rng, mut_params):
             did_mutate = True
 
         if did_mutate:
             self.already_evaluated = False
 
 
-    def mutate_intergene_distances(self, mut_params: MutationParams) -> bool:
+    def mutate_intergene_distances(self, rng: np.random.Generator, mut_params: MutationParams) -> bool:
 
         # Exit early if we don't have intergene mutations in this run
         if mut_params.intergene_poisson_lam == 0.0:
@@ -264,11 +256,11 @@ class Individual:
 
         did_mutate = False
 
-        nb_mutations = self.rng.poisson(mut_params.intergene_poisson_lam)
+        nb_mutations = rng.poisson(mut_params.intergene_poisson_lam)
 
         for i_mut in range(nb_mutations):
 
-            intergene_delta = self.rng.normal(loc=0, scale=mut_params.intergene_mutation_var)
+            intergene_delta = rng.normal(loc=0, scale=mut_params.intergene_mutation_var)
             intergene_delta = np.fix(intergene_delta).astype(int) # Round toward 0
 
             # Try genes until we find one where we can perform the indel
@@ -276,7 +268,7 @@ class Individual:
             tries_left = 100
 
             while (not found_gene) and (tries_left > 0):
-                i_gene = self.rng.integers(self.nb_genes)
+                i_gene = rng.integers(self.nb_genes)
                 if self.genes[i_gene].intergene + intergene_delta > 0:
                     self.genes[i_gene].intergene += intergene_delta
                     found_gene = True
@@ -288,7 +280,7 @@ class Individual:
         return did_mutate
 
 
-    def mutate_basal_sc(self, mut_params: MutationParams) -> bool:
+    def mutate_basal_sc(self, rng: np.random.Generator, mut_params: MutationParams) -> bool:
 
         # Exit early if we don't have SC mutations in this run
         if mut_params.basal_sc_mutation_prob == 0.0:
@@ -296,8 +288,8 @@ class Individual:
 
         did_mutate = False
 
-        if self.rng.random() < mut_params.basal_sc_mutation_prob:
-            basal_sc_delta = self.rng.normal(loc=0, scale=mut_params.basal_sc_mutation_var)
+        if rng.random() < mut_params.basal_sc_mutation_prob:
+            basal_sc_delta = rng.normal(loc=0, scale=mut_params.basal_sc_mutation_var)
 
             self.sigma_basal += basal_sc_delta
 
@@ -306,18 +298,18 @@ class Individual:
         return did_mutate
 
 
-    def generate_inversions(self, mut_params: MutationParams) -> bool:
+    def generate_inversions(self, rng: np.random.Generator, mut_params: MutationParams) -> bool:
         did_mutate = False
 
-        nb_inversions = self.rng.poisson(mut_params.inversion_poisson_lam)
+        nb_inversions = rng.poisson(mut_params.inversion_poisson_lam)
 
         for inv in range(nb_inversions):
             # Here, we are only looking at intergenic distances, and do not care
             # about gene lengths, so we only count non-coding bases.
             gene_positions, noncoding_size = self.compute_gene_positions(include_coding=False)
 
-            start_pos = self.rng.integers(0, noncoding_size)
-            end_pos = self.rng.integers(0, noncoding_size)
+            start_pos = rng.integers(0, noncoding_size)
+            end_pos = rng.integers(0, noncoding_size)
 
             # Inverting between start and end or between end and start is equivalent
             if end_pos < start_pos:
@@ -652,7 +644,7 @@ class Population:
         for i_new_indiv in range(self.nb_indivs):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
-            new_indiv.mutate(self.mut_params)
+            new_indiv.mutate(self.rng, self.mut_params)
             new_indiv.evaluate(self.sigma_A, self.sigma_B)
             new_indivs.append(new_indiv)
 
