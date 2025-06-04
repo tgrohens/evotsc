@@ -556,7 +556,8 @@ class Population:
                  sigma_A: float,
                  sigma_B: float,
                  selection_method: str,
-                 rng: np.random.Generator = None) -> None:
+                 pop_rng: np.random.Generator,
+                 indiv_rngs: List[np.random.Generator]) -> None:
         # Individuals
         self.individuals = []
         self.nb_indivs = nb_indivs
@@ -564,10 +565,8 @@ class Population:
             indiv = init_indiv.clone()
             self.individuals.append(indiv)
 
-        if rng:
-            self.rng = rng
-        else:
-            self.rng = np.random.default_rng()
+        self.pop_rng = pop_rng
+        self.indiv_rngs = indiv_rngs
 
         # MutationParams operators
         self.mut_params = mut_params
@@ -635,7 +634,7 @@ class Population:
         else:
             raise ValueError('Unknown selection method')
 
-        ancestors = self.rng.choice(np.arange(self.nb_indivs),
+        ancestors = self.pop_rng.choice(np.arange(self.nb_indivs),
                                     size=self.nb_indivs,
                                     p=prob)
 
@@ -644,7 +643,7 @@ class Population:
         for i_new_indiv in range(self.nb_indivs):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
-            new_indiv.mutate(self.rng, self.mut_params)
+            new_indiv.mutate(self.indiv_rngs[i_new_indiv], self.mut_params)
             new_indiv.evaluate(self.sigma_A, self.sigma_B)
             new_indivs.append(new_indiv)
 
@@ -661,7 +660,7 @@ class Population:
     def neutral_step(self) -> Tuple[Individual, float]:
 
         # Pick random ancestors
-        ancestors = self.rng.choice(np.arange(self.nb_indivs), size=self.nb_indivs)
+        ancestors = self.pop_rng.choice(np.arange(self.nb_indivs), size=self.nb_indivs)
 
         # New generation
         new_indivs = []

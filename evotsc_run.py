@@ -156,7 +156,13 @@ def main():
         seed = args.seed
         if not seed:
             seed = np.random.randint(1e9)
-        rng = np.random.default_rng(seed=seed)
+
+        # Create a RNG for the initial genes / the population, and nb_indiv RNG for individuals
+        # Each individual 'id' gets their own RNG for parallelization
+        rng_seed_seq = np.random.SeedSequence(seed)
+        all_rngs = [np.random.default_rng(child_seed) for child_seed in rng_seed_seq.spawn(nb_indivs + 1)]
+        init_rng = all_rngs[0]
+        indiv_rngs = all_rngs[1:]
 
         # Save the parameters for reproducibility
         print_params(output_dir, seed, args.neutral)
@@ -166,7 +172,7 @@ def main():
                                           length=gene_length,
                                           nb_genes=nb_genes,
                                           default_basal_expression=default_basal_expression,
-                                          rng=rng)
+                                          rng=init_rng)
 
 
         init_indiv = evotsc.Individual(genes=init_genes,
@@ -180,7 +186,6 @@ def main():
         # Evaluate the initial individual before creating the clonal population
         init_indiv.evaluate(sigma_A, sigma_B)
 
-
         mut_params = evotsc.MutationParams(basal_sc_mutation_prob=basal_sc_mutation_prob,
                                    basal_sc_mutation_var=basal_sc_mutation_var,
                                    intergene_poisson_lam=intergene_poisson_lam,
@@ -193,7 +198,8 @@ def main():
                                        sigma_A=sigma_A,
                                        sigma_B=sigma_B,
                                        selection_method=selection_method,
-                                       rng=rng)
+                                       pop_rng=init_rng,
+                                       indiv_rngs=indiv_rngs)
 
         if not args.neutral:
             stats_file = open(f'{output_dir}/stats.csv', 'w')
