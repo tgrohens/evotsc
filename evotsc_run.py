@@ -135,11 +135,12 @@ def main():
                             help='run without selection')
     arg_parser.add_argument('-s', '--seed', type=int,
                             help='seed for the RNG')
+    arg_parser.add_argument('-j', '--jobs', type=int, default=4,
+                            help='number of parallel jobs')
     args = arg_parser.parse_args()
 
     nb_generations = int(args.generations)
     output_dir = pathlib.Path(args.output_dir)
-
 
     first_start = True
     start_gen = 0
@@ -198,6 +199,7 @@ def main():
                                        sigma_A=sigma_A,
                                        sigma_B=sigma_B,
                                        selection_method=selection_method,
+                                       nb_jobs=args.jobs,
                                        pop_rng=init_rng,
                                        indiv_rngs=indiv_rngs)
 

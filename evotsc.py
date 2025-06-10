@@ -1,6 +1,6 @@
-import copy
 from typing import List, Tuple
 
+import joblib
 import numpy as np
 
 import evotsc_core
@@ -556,8 +556,10 @@ class Population:
                  sigma_A: float,
                  sigma_B: float,
                  selection_method: str,
+                 nb_jobs: int,
                  pop_rng: np.random.Generator,
                  indiv_rngs: List[np.random.Generator]) -> None:
+
         # Individuals
         self.individuals = []
         self.nb_indivs = nb_indivs
@@ -565,8 +567,12 @@ class Population:
             indiv = init_indiv.clone()
             self.individuals.append(indiv)
 
+        # RNGs
         self.pop_rng = pop_rng
         self.indiv_rngs = indiv_rngs
+
+        # Number of parallel jobs
+        self.nb_jobs = nb_jobs
 
         # MutationParams operators
         self.mut_params = mut_params
@@ -638,14 +644,20 @@ class Population:
                                     size=self.nb_indivs,
                                     p=prob)
 
-        # Create the new generation: generate mutations, apply them, evaluate individuals
-        new_indivs = []
-        for i_new_indiv in range(self.nb_indivs):
+        # # Function for parallel evaluation
+        # # /!\ This only works with the `threading` backend of joblib: the (default)
+        # # `loky` backend creates copies of objects and messes up RNG state
+        def parallel_new_indiv(i_new_indiv: int):
             ancestor = self.individuals[ancestors[i_new_indiv]]
             new_indiv = ancestor.clone()
             new_indiv.mutate(self.indiv_rngs[i_new_indiv], self.mut_params)
             new_indiv.evaluate(self.sigma_A, self.sigma_B)
-            new_indivs.append(new_indiv)
+            return new_indiv
+
+        # Create and evaluate individuals in parallel
+        new_indivs = joblib.Parallel(n_jobs=self.nb_jobs, backend='threading')(
+            joblib.delayed(parallel_new_indiv)(i_new_indiv) for i_new_indiv in range(self.nb_indivs)
+        )
 
         self.individuals = new_indivs
 
