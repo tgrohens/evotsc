@@ -5,7 +5,7 @@ from numba import jit
 import numpy as np
 
 
-@jit(nopython=True)
+@jit(nopython=True, nogil=True)
 def run_system_numba(nb_genes: int,
                   init_expr: np.ndarray,
                   inter_matrix: np.ndarray,
@@ -57,7 +57,7 @@ def run_system_numba(nb_genes: int,
 
     return temporal_expr
 
-@jit(nopython=True)
+@jit(nopython=True, nogil=True)
 def compute_inter_matrix_numba(nb_genes: int,
                                gene_positions: np.ndarray,
                                gene_orientations: np.ndarray,
@@ -133,7 +133,7 @@ def compute_inter_matrix_numba(nb_genes: int,
 
     return inter_matrix
 
-@jit(nopython=True)
+@jit(nopython=True, nogil=True)
 def compute_fitness_numba(nb_genes: int,
                           expr_levels_A: np.ndarray,
                           expr_levels_B: np.ndarray,
