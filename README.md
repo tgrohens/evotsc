@@ -34,9 +34,13 @@ EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including al
 
 ## Publications
 
-### PCI Math Comp Biol submission
+### PLOS Computational Biology paper
 
-The exact code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) undergoing peer review at PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [pci](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/pci) branch.
+The exact code used for the upcoming PLOS Computational Biology paper, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [ploscb](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/ploscb) branch.
+
+### PCI Math Comp Biol peer-reviewed preprint
+
+The exact code used for the [bioRxiv preprint](https://www.biorxiv.org/content/10.1101/2022.09.23.509185v2) peer-reviewed at PCI Math Comp Biol, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [pci](https://gitlab.inria.fr/tgrohens/evotsc/-/tree/pci) branch.
 
 ### PhD thesis
 
