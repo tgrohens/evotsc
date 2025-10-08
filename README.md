@@ -36,7 +36,7 @@ EvoTSC is licensed under the [3-clause BSD licence](./LICENSE.txt), including al
 
 ### PLOS Computational Biology paper
 
-The exact code used for the upcoming PLOS Computational Biology paper, as well as the Jupyter notebooks analyzing the resulting data, can be found in the [ploscb](https://www.github.com/tgrohens/evotsc/tree/ploscb) branch.
+The exact code used for the [PLOS Computational Biology paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1013482), as well as the Jupyter notebooks analyzing the resulting data, can be found in the [ploscb](https://www.github.com/tgrohens/evotsc/tree/ploscb) branch.
 
 ### PCI Math Comp Biol peer-reviewed preprint
 
